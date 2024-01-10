@@ -1,0 +1,3 @@
+[submodule "WinAppCommunity.Sdk"]
+	path = WinAppCommunity.Sdk
+	url = https://github.com/WinAppCommunity/WinAppCommunity.Sdk
