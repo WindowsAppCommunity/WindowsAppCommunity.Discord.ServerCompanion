@@ -1,16 +1,14 @@
-﻿using Ipfs.Http;
+﻿using CommunityToolkit.Diagnostics;
+using Ipfs;
+using Ipfs.Http;
 using OwlCore.Kubo;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
+using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
-using CommunityToolkit.Diagnostics;
-using Ipfs;
-using Remora.Discord.Commands.Services;
-using Remora.Discord.Extensions.Embeds;
-using WinAppCommunity.Discord.ServerCompanion.Commands;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
@@ -20,17 +18,19 @@ namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 [Group("user")]
 public class UserCommands : CommandGroup
 {
-    private readonly FeedbackService _feedbackService;
+    private readonly IFeedbackService _feedbackService;
+    private readonly IInteractionContext _context;
     private readonly UserKeystore _userKeystore;
     private readonly IpfsClient _client;
-    private readonly IInteractionContext _context;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserCommands"/> class.
     /// </summary>
     /// <param name="feedbackService">The feedback service.</param>
     /// <param name="context">The context of the invoked interaction.</param>
-    public UserCommands(IInteractionContext context, FeedbackService feedbackService, UserKeystore userKeystore, IpfsClient client)
+    /// <param name="userKeystore">A keystore that stores all known user keys.</param>
+    /// <param name="client">The client to use when interacting with IPFS.</param>
+    public UserCommands(IInteractionContext context, IFeedbackService feedbackService, UserKeystore userKeystore, IpfsClient client)
     {
         _context = context;
         _feedbackService = feedbackService;
@@ -65,16 +65,17 @@ public class UserCommands : CommandGroup
             // Create ipns address
             // Use name "temp" to create key
             var key = await _client.Key.CreateAsync(name: "temp", "ed25519", 4096);
-
-            var peer = new Peer { Id = key.Id };
+            
             // Rename key name to the key id
-            var renamed = await _client.Key.RenameAsync("temp", $"{peer.PublicKey}");
+            var renamed = await _client.Key.RenameAsync("temp", $"{key.Id}");
             
             // Publish data to ipns
             await _client.Name.PublishAsync(cid, $"{renamed.Id}");
+            
+            var peerCid = new Cid { Hash = key.Id };
 
             // Save new renamed
-            _userKeystore.ManagedUsers.Add(new(user, $"{renamed.Id}"));
+            _userKeystore.ManagedUsers.Add(new(user, peerCid));
             await _userKeystore.SaveAsync();
 
             return (Result)await _feedbackService.SendContextualInfoAsync("Ran to completion");
