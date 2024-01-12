@@ -11,7 +11,7 @@ public class TestFixture()
     /// <summary>
     /// A client that enables access to ipfs.
     /// </summary>
-    public static IpfsClient? Client { get; private set; }
+    public static IpfsClient? Client => Bootstrapper?.Client;
 
     /// <summary>
     /// The bootstrapper that was used to create the <see cref="Client"/>.
@@ -29,8 +29,6 @@ public class TestFixture()
         var workingFolder = await SafeCreateWorkingFolder();
 
         Bootstrapper = await CreateNodeAsync(workingFolder, "node1", 5034, 8034);
-
-        Client = new IpfsClient(Bootstrapper.ApiUri.OriginalString);
     }
 
     /// <summary>
@@ -77,9 +75,13 @@ public class TestFixture()
     {
         var tempFolder = new SystemFolder(Path.GetTempPath());
 
+        // When Kubo is stopped unexpectedly, it may leave some files with a ReadOnly attribute.
+        // Since this folder is created every time tests are run, we need to clean up any files leftover from prior runs.
+        // To do that, we need to remove the ReadOnly file attribute.
         var testTempRoot = (SystemFolder)await tempFolder.CreateFolderAsync(name, overwrite: false);
         await SetAllFileAttributesRecursive(testTempRoot, attributes => attributes &~ FileAttributes.ReadOnly);
 
+        // Delete and recreate the folder.
         return (SystemFolder)await tempFolder.CreateFolderAsync(name, overwrite: true); 
     }
 
