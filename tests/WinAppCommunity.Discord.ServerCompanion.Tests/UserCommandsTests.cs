@@ -1,5 +1,7 @@
-using Ipfs.Http;
-using OwlCore.Kubo;
+using Remora.Discord.Commands.Contexts;
+using Remora.Discord.Commands.Feedback.Services;
+using WinAppCommunity.Discord.ServerCompanion.Commands;
+using WinAppCommunity.Discord.ServerCompanion.Keystore;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Tests;
 
@@ -9,6 +11,15 @@ public class UserCommandsTests
     [TestMethod]
     public async Task RegisterUser()
     {
+        Assert.IsNotNull(TestFixture.Client);
+        
+        IInteractionContext context = null!;
+        IFeedbackService feedback = null!;
+        UserKeystore keystore = null!;
+        
+        var userCommands = new UserCommands(context, feedback, keystore, TestFixture.Client);
+        
+        
     }
         
     [TestMethod]
