@@ -6,12 +6,13 @@ using OwlCore.Storage.SystemIO;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Tests;
 
+[TestClass]
 public class TestFixture()
 {
     /// <summary>
     /// A client that enables access to ipfs.
     /// </summary>
-    public static IpfsClient? Client => Bootstrapper?.Client;
+    public static IpfsClient Client => Bootstrapper?.Client ?? throw new InvalidOperationException("Bootstrapper not found, unable to set up client.");
 
     /// <summary>
     /// The bootstrapper that was used to create the <see cref="Client"/>.
@@ -22,7 +23,7 @@ public class TestFixture()
     /// Sets up the test fixture.
     /// </summary>
     [AssemblyInitialize]
-    public async Task Setup()
+    public static async Task Setup(TestContext context)
     {
         OwlCore.Diagnostics.Logger.MessageReceived += (sender, args) => Debug.WriteLine(args.Message);
 
@@ -35,7 +36,7 @@ public class TestFixture()
     /// Tears down the test fixture.
     /// </summary>
     [AssemblyCleanup]
-    public async Task Teardown()
+    public static async Task Teardown()
     {
         Bootstrapper?.Dispose();
     }
@@ -48,7 +49,7 @@ public class TestFixture()
     /// <param name="apiPort">The port number to use for the Kubo RPC API.</param>
     /// <param name="gatewayPort">The port number to use for the locally hosted Ipfs Http Gateway.</param>
     /// <returns>An instance of <see cref="KuboBootstrapper"/> that has been started and is ready to use.</returns>
-    private async Task<KuboBootstrapper> CreateNodeAsync(SystemFolder workingDirectory, string nodeRepoName, int apiPort, int gatewayPort)
+    public static async Task<KuboBootstrapper> CreateNodeAsync(SystemFolder workingDirectory, string nodeRepoName, int apiPort, int gatewayPort)
     {
         var nodeRepo = (SystemFolder)await workingDirectory.CreateFolderAsync(nodeRepoName, overwrite: true);
 
@@ -71,18 +72,23 @@ public class TestFixture()
     /// Creates a temp folder for the test fixture to work in, safely unlocking and removing existing files if needed.
     /// </summary>
     /// <returns>The folder that was created.</returns>
-    private async Task<SystemFolder> SafeCreateWorkingFolder(string name = "WinAppCommunity.Discord.ServerCompanion")
+    public static async Task<SystemFolder> SafeCreateWorkingFolder(string name = "WinAppCommunity.Discord.ServerCompanion")
     {
         var tempFolder = new SystemFolder(Path.GetTempPath());
+
+        var defaultName = "WinAppCommunity.Discord.ServerCompanion";
+
+        if (name != defaultName)
+            name = $"{defaultName}.{name}";
 
         // When Kubo is stopped unexpectedly, it may leave some files with a ReadOnly attribute.
         // Since this folder is created every time tests are run, we need to clean up any files leftover from prior runs.
         // To do that, we need to remove the ReadOnly file attribute.
         var testTempRoot = (SystemFolder)await tempFolder.CreateFolderAsync(name, overwrite: false);
-        await SetAllFileAttributesRecursive(testTempRoot, attributes => attributes &~ FileAttributes.ReadOnly);
+        await SetAllFileAttributesRecursive(testTempRoot, attributes => attributes & ~FileAttributes.ReadOnly);
 
         // Delete and recreate the folder.
-        return (SystemFolder)await tempFolder.CreateFolderAsync(name, overwrite: true); 
+        return (SystemFolder)await tempFolder.CreateFolderAsync(name, overwrite: true);
     }
 
     /// <summary>
@@ -90,7 +96,7 @@ public class TestFixture()
     /// </summary>
     /// <param name="rootFolder">The folder to set file permissions in.</param>
     /// <param name="transform">This function is provided the current file attributes, and should return the new file attributes.</param>
-    private async Task SetAllFileAttributesRecursive(SystemFolder rootFolder, Func<FileAttributes, FileAttributes> transform)
+    public static async Task SetAllFileAttributesRecursive(SystemFolder rootFolder, Func<FileAttributes, FileAttributes> transform)
     {
         await foreach (SystemFile file in rootFolder.GetFilesAsync())
             file.Info.Attributes = transform(file.Info.Attributes);
