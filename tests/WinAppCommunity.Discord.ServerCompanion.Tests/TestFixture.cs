@@ -27,7 +27,9 @@ public class TestFixture()
     {
         OwlCore.Diagnostics.Logger.MessageReceived += (sender, args) => Debug.WriteLine(args.Message);
 
-        var workingFolder = await SafeCreateWorkingFolder();
+        Assert.IsNotNull(context.DeploymentDirectory);
+
+        var workingFolder = await SafeCreateWorkingFolder(new SystemFolder(context.DeploymentDirectory), typeof(TestFixture).Namespace ?? throw new ArgumentNullException());
 
         Bootstrapper = await CreateNodeAsync(workingFolder, "node1", 5034, 8034);
     }
@@ -36,7 +38,7 @@ public class TestFixture()
     /// Tears down the test fixture.
     /// </summary>
     [AssemblyCleanup]
-    public static async Task Teardown()
+    public static void Teardown()
     {
         Bootstrapper?.Dispose();
     }
@@ -58,6 +60,7 @@ public class TestFixture()
             ApiUri = new Uri($"http://127.0.0.1:{apiPort}"),
             GatewayUri = new Uri($"http://127.0.0.1:{gatewayPort}"),
             BinaryWorkingFolder = workingDirectory,
+            RoutingMode = DhtRoutingMode.DhtClient,
         };
 
         OwlCore.Diagnostics.Logger.LogInformation($"Starting node {nodeRepoName}\n");
@@ -72,23 +75,16 @@ public class TestFixture()
     /// Creates a temp folder for the test fixture to work in, safely unlocking and removing existing files if needed.
     /// </summary>
     /// <returns>The folder that was created.</returns>
-    public static async Task<SystemFolder> SafeCreateWorkingFolder(string name = "WinAppCommunity.Discord.ServerCompanion")
+    public static async Task<SystemFolder> SafeCreateWorkingFolder(SystemFolder rootFolder, string name)
     {
-        var tempFolder = new SystemFolder(Path.GetTempPath());
-
-        var defaultName = "WinAppCommunity.Discord.ServerCompanion";
-
-        if (name != defaultName)
-            name = $"{defaultName}.{name}";
-
         // When Kubo is stopped unexpectedly, it may leave some files with a ReadOnly attribute.
         // Since this folder is created every time tests are run, we need to clean up any files leftover from prior runs.
         // To do that, we need to remove the ReadOnly file attribute.
-        var testTempRoot = (SystemFolder)await tempFolder.CreateFolderAsync(name, overwrite: false);
+        var testTempRoot = (SystemFolder)await rootFolder.CreateFolderAsync(name, overwrite: false);
         await SetAllFileAttributesRecursive(testTempRoot, attributes => attributes & ~FileAttributes.ReadOnly);
 
         // Delete and recreate the folder.
-        return (SystemFolder)await tempFolder.CreateFolderAsync(name, overwrite: true);
+        return (SystemFolder)await rootFolder.CreateFolderAsync(name, overwrite: true);
     }
 
     /// <summary>
