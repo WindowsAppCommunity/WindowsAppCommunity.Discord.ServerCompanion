@@ -20,7 +20,7 @@ public partial class UserCommandsTests
     public static async Task Setup(TestContext context)
     {
         Assert.IsNotNull(context.DeploymentDirectory);
-        var workingFolder = await TestFixture.SafeCreateWorkingFolder(new SystemFolder(context.DeploymentDirectory), $"{nameof(UserCommandsTests)}.{nameof(RegisterUser)}");
+        var workingFolder = await TestFixture.SafeCreateWorkingFolder(new SystemFolder(context.DeploymentDirectory), nameof(UserCommandsTests));
 
         UserKeystore keystore = new UserKeystore(workingFolder);
 
