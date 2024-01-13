@@ -8,5 +8,5 @@ public class MockInteractionContext : IInteractionContext
     public bool HasRespondedToInteraction { get; set; }
     public bool IsOriginalEphemeral { get; set; }
 
-    public IInteraction Interaction => new MockInteraction();
+    public required IInteraction Interaction  { get; init; }
 }

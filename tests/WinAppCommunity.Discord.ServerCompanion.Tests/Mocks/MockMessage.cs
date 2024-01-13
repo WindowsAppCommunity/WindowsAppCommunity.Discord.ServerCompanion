@@ -9,9 +9,9 @@ public class MockMessage : IMessage
 
     public Snowflake ChannelID => throw new NotImplementedException();
 
-    public IUser Author => throw new NotImplementedException();
+    public required IUser Author { get; init; }
 
-    public string Content => throw new NotImplementedException();
+    public required string Content { get; init; }
 
     public DateTimeOffset Timestamp => throw new NotImplementedException();
 
@@ -21,17 +21,17 @@ public class MockMessage : IMessage
 
     public bool MentionsEveryone => throw new NotImplementedException();
 
-    public IReadOnlyList<IUser> Mentions => throw new NotImplementedException();
+    public IReadOnlyList<IUser> Mentions { get; } = new List<IUser>();
 
-    public IReadOnlyList<Snowflake> MentionedRoles => throw new NotImplementedException();
+    public IReadOnlyList<Snowflake> MentionedRoles { get; } = new List<Snowflake>();
 
-    public Optional<IReadOnlyList<IChannelMention>> MentionedChannels => throw new NotImplementedException();
+    public Optional<IReadOnlyList<IChannelMention>> MentionedChannels { get; } = new List<IChannelMention>();
 
-    public IReadOnlyList<IAttachment> Attachments => throw new NotImplementedException();
+    public IReadOnlyList<IAttachment> Attachments { get; } = new List<IAttachment>();
 
-    public IReadOnlyList<IEmbed> Embeds => throw new NotImplementedException();
+    public IReadOnlyList<IEmbed> Embeds { get; init; } = new List<IEmbed>();
 
-    public Optional<IReadOnlyList<IReaction>> Reactions => throw new NotImplementedException();
+    public Optional<IReadOnlyList<IReaction>> Reactions { get; } = new List<IReaction>();
 
     public Optional<string> Nonce => throw new NotImplementedException();
 
@@ -39,7 +39,7 @@ public class MockMessage : IMessage
 
     public Optional<Snowflake> WebhookID => throw new NotImplementedException();
 
-    public MessageType Type => throw new NotImplementedException();
+    public MessageType Type { get; init; } = MessageType.Default;
 
     public Optional<IMessageActivity> Activity => throw new NotImplementedException();
 
@@ -49,7 +49,7 @@ public class MockMessage : IMessage
 
     public Optional<IMessageReference> MessageReference => throw new NotImplementedException();
 
-    public Optional<MessageFlags> Flags => throw new NotImplementedException();
+    public Optional<MessageFlags> Flags { get; init; }
 
     public Optional<IMessage?> ReferencedMessage => throw new NotImplementedException();
 
