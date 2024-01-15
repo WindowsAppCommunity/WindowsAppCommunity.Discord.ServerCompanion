@@ -26,6 +26,11 @@ Console.CancelKeyPress += (sender, eventArgs) =>
     cancellationSource.Cancel();
 };
 
+AppDomain.CurrentDomain.ProcessExit += (object? sender, EventArgs e) =>
+{
+    cancellationSource.Cancel();
+};
+
 // Logging setup
 Logger.MessageReceived += Logger_MessageReceived;
 
@@ -56,15 +61,21 @@ ArgumentNullException.ThrowIfNullOrEmpty(guildId);
 // Service setup
 var config = new ServerCompanionConfig(botToken, guildId);
 
-var userKeystore = new UserKeystore(new MemoryFolder("", nameof(UserKeystore)));
-var projectKeystore = new ProjectKeystore(new MemoryFolder("", nameof(UserKeystore)));
-var publisherKeystore = new PublisherKeystore(new MemoryFolder("", nameof(UserKeystore)));
+var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WinAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
+var kuboRepo = (SystemFolder)await serverCompanionData.CreateFolderAsync(".ipfs", overwrite: false, cancelTok);
+var keystoreData = (SystemFolder)await serverCompanionData.CreateFolderAsync("keystore", overwrite: false, cancelTok);
+
+var userKeystore = new UserKeystore(keystoreData);
+var projectKeystore = new ProjectKeystore(keystoreData);
+var publisherKeystore = new PublisherKeystore(keystoreData);
+
+await userKeystore.LoadAsync(cancelTok);
+await projectKeystore.LoadAsync(cancelTok);
+await publisherKeystore.LoadAsync(cancelTok);
 
 // Kubo setup (for ipfs access)
-var tempFolder = new SystemFolder(Path.GetTempPath());
-var repoPath = (SystemFolder)await tempFolder.CreateFolderAsync(".ipfs", overwrite: false, cancelTok);
-
-var kubo = new KuboBootstrapper(repoPath.Path)
+var kubo = new KuboBootstrapper(kuboRepo.Path)
 {
     ApiUri = new Uri("http://127.0.0.1:5021"),
     GatewayUri = new Uri("http://127.0.0.1:8021"),
