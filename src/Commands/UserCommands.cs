@@ -4,7 +4,6 @@ using Ipfs.Http;
 using OwlCore.Kubo;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
-using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Discord.Extensions.Embeds;
@@ -14,6 +13,7 @@ using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
+using User = WinAppCommunity.Sdk.Models.User;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
@@ -49,12 +49,13 @@ public class UserCommands : CommandGroup
             var discordId = _context.Interaction.Member.Value.User.Value.ID;
 
             // Setup connections
-            // Discord connection is required for operation within Discord bot.
+            // Discord connection is required for users to operate within Discord bot.
             var connections = new List<ApplicationConnection>
             {
                 new DiscordConnection(discordId.ToString()),
             };
 
+            // Add optional email
             if (!string.IsNullOrWhiteSpace(contactEmail))
                 connections.Add(new EmailConnection(contactEmail));
 
@@ -80,7 +81,7 @@ public class UserCommands : CommandGroup
             _userKeystore.ManagedUsers.Add(new(user, peerCid));
             await _userKeystore.SaveAsync();
 
-            return (Result)await _feedbackService.SendContextualInfoAsync("Ran to completion");
+            return (Result)await _feedbackService.SendContextualSuccessAsync($"User registration successful. Welcome to the community, <@{discordId}>!");
         }
         catch (Exception ex)
         {
@@ -100,7 +101,11 @@ public class UserCommands : CommandGroup
 
             var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Connections.Any(o => o is DiscordConnection discordConnection && discordConnection.DiscordId == $"{discordId}"));
             if (managedUser is null)
-                return (Result)new UserProfileNotFoundError();
+            {
+                var result = (Result)new UserProfileNotFoundError();
+                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
+                return result;
+            }
 
             managedUser.User = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
 
@@ -115,9 +120,12 @@ public class UserCommands : CommandGroup
             var emailConnection = managedUser.User.Connections.FirstOrDefault(x => x is EmailConnection emailConnection) as EmailConnection;
             if (emailConnection is not null)
             {
-                var embedWithFieldResult = embedBuilder.AddField("email", emailConnection.Email, inline: true);
+                var embedWithFieldResult = embedBuilder.AddField("Contact email", emailConnection.Email, inline: true);
                 if (!embedWithFieldResult.IsSuccess)
+                {
+                    await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{embedWithFieldResult.Error}");
                     return embedWithFieldResult;
+                }
 
                 embedBuilder = embedWithFieldResult.Entity;
             }
