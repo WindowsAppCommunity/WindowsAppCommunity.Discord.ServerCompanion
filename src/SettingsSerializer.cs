@@ -1,27 +1,9 @@
 ﻿using CommunityToolkit.Diagnostics;
+using Newtonsoft.Json;
 using OwlCore.ComponentModel;
-using System.Collections.ObjectModel;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using WinAppCommunity.Discord.ServerCompanion.Commands;
-
-namespace WinAppCommunity.Discord.ServerCompanion;
 
 /// <summary>
-/// Supplies type information for settings values.
-/// </summary>
-[JsonSourceGenerationOptions(WriteIndented = true)]
-[JsonSerializable(typeof(Ipfs.Cid))]
-[JsonSerializable(typeof(Dictionary<string, Ipfs.Cid[]>))]
-[JsonSerializable(typeof(ObservableCollection<string>))]
-[JsonSerializable(typeof(List<ManagedUserMap>))]
-public partial class SettingsSerializerContext : JsonSerializerContext
-{
-}
-
-
-/// <summary>
-/// An <see cref="IAsyncSerializer{TSerialized}"/> and implementation for serializing and deserializing streams using System.Text.Json.
+/// An <see cref="IAsyncSerializer{TSerialized}"/> and implementation for serializing and deserializing streams using Newtonsoft.Json.
 /// </summary>
 public class SettingsSerializer : IAsyncSerializer<Stream>, ISerializer<Stream>
 {
@@ -34,7 +16,11 @@ public class SettingsSerializer : IAsyncSerializer<Stream>, ISerializer<Stream>
     public async Task<Stream> SerializeAsync<T>(T data, CancellationToken? cancellationToken = null)
     {
         var stream = new MemoryStream();
-        await JsonSerializer.SerializeAsync(stream, data, typeof(T), context: SettingsSerializerContext.Default, cancellationToken: cancellationToken ?? CancellationToken.None);
+        var writer = new StreamWriter(stream);
+        var json = JsonConvert.SerializeObject(data);
+        await writer.WriteAsync(json);
+        await writer.FlushAsync();
+        stream.Position = 0;
         return stream;
     }
 
@@ -42,22 +28,30 @@ public class SettingsSerializer : IAsyncSerializer<Stream>, ISerializer<Stream>
     public async Task<Stream> SerializeAsync(Type inputType, object data, CancellationToken? cancellationToken = null)
     {
         var stream = new MemoryStream();
-        await JsonSerializer.SerializeAsync(stream, data, inputType, context: SettingsSerializerContext.Default, cancellationToken: cancellationToken ?? CancellationToken.None);
+        var writer = new StreamWriter(stream);
+        var json = JsonConvert.SerializeObject(data, inputType, new JsonSerializerSettings());
+        await writer.WriteAsync(json);
+        await writer.FlushAsync();
+        stream.Position = 0;
         return stream;
     }
 
     /// <inheritdoc />
     public async Task<TResult> DeserializeAsync<TResult>(Stream serialized, CancellationToken? cancellationToken = null)
     {
-        var result = await JsonSerializer.DeserializeAsync(serialized, typeof(TResult), SettingsSerializerContext.Default);
+        var reader = new StreamReader(serialized);
+        var json = await reader.ReadToEndAsync();
+        var result = JsonConvert.DeserializeObject<TResult>(json);
         Guard.IsNotNull(result);
-        return (TResult)result;
+        return result;
     }
 
     /// <inheritdoc />
     public async Task<object> DeserializeAsync(Type returnType, Stream serialized, CancellationToken? cancellationToken = null)
     {
-        var result = await JsonSerializer.DeserializeAsync(serialized, returnType, SettingsSerializerContext.Default);
+        var reader = new StreamReader(serialized);
+        var json = await reader.ReadToEndAsync();
+        var result = JsonConvert.DeserializeObject(json, returnType);
         Guard.IsNotNull(result);
         return result;
     }
@@ -66,7 +60,11 @@ public class SettingsSerializer : IAsyncSerializer<Stream>, ISerializer<Stream>
     public Stream Serialize<T>(T data)
     {
         var stream = new MemoryStream();
-        JsonSerializer.SerializeAsync(stream, data, typeof(T), context: SettingsSerializerContext.Default, cancellationToken: CancellationToken.None);
+        var writer = new StreamWriter(stream);
+        var json = JsonConvert.SerializeObject(data);
+        writer.Write(json);
+        writer.Flush();
+        stream.Position = 0;
         return stream;
     }
 
@@ -74,22 +72,30 @@ public class SettingsSerializer : IAsyncSerializer<Stream>, ISerializer<Stream>
     public Stream Serialize(Type type, object data)
     {
         var stream = new MemoryStream();
-        JsonSerializer.SerializeAsync(stream, data, type, context: SettingsSerializerContext.Default, cancellationToken: CancellationToken.None);
+        var writer = new StreamWriter(stream);
+        var json = JsonConvert.SerializeObject(data, type, new JsonSerializerSettings());
+        writer.Write(json);
+        writer.Flush();
+        stream.Position = 0;
         return stream;
     }
 
     /// <inheritdoc />
     public TResult Deserialize<TResult>(Stream serialized)
     {
-        var result = JsonSerializer.Deserialize(serialized, typeof(TResult), SettingsSerializerContext.Default);
+        var reader = new StreamReader(serialized);
+        var json = reader.ReadToEnd();
+        var result = JsonConvert.DeserializeObject<TResult>(json);
         Guard.IsNotNull(result);
-        return (TResult)result;
+        return result;
     }
 
     /// <inheritdoc />
     public object Deserialize(Type type, Stream serialized)
     {
-        var result = JsonSerializer.Deserialize(serialized, type, SettingsSerializerContext.Default);
+        var reader = new StreamReader(serialized);
+        var json = reader.ReadToEnd();
+        var result = JsonConvert.DeserializeObject(json, type);
         Guard.IsNotNull(result);
         return result;
     }
