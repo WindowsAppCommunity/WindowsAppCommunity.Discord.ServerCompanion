@@ -12,8 +12,10 @@ using Remora.Discord.Commands.Services;
 using Remora.Discord.Gateway;
 using Remora.Discord.Gateway.Extensions;
 using Remora.Discord.Gateway.Results;
+using Remora.Discord.Interactivity.Extensions;
 using Remora.Results;
 using WinAppCommunity.Discord.ServerCompanion.Commands;
+using WinAppCommunity.Discord.ServerCompanion.Interactivity;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 
 // Cancellation setup
@@ -93,8 +95,11 @@ var services = new ServiceCollection()
     .AddSingleton(kubo.Client)
     .AddDiscordGateway(_ => botToken)
     .AddDiscordCommands(enableSlash: true)
+    .AddInteractivity()
+    .AddInteractionGroup<MyInteractions>()
     .AddCommands()
         .AddCommandTree()
+            .WithCommandGroup<SampleCommandGroup>()
             .WithCommandGroup<UserCommands>()
             .Finish()
     .AddResponder<PingPongResponder>()
