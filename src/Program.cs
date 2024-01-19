@@ -14,6 +14,7 @@ using Remora.Discord.Gateway.Extensions;
 using Remora.Discord.Gateway.Results;
 using Remora.Discord.Interactivity.Extensions;
 using Remora.Results;
+using WinAppCommunity.Discord.ServerCompanion;
 using WinAppCommunity.Discord.ServerCompanion.Commands;
 using WinAppCommunity.Discord.ServerCompanion.Interactivity;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -100,6 +101,7 @@ var services = new ServiceCollection()
     .AddCommands()
         .AddCommandTree()
             .WithCommandGroup<SampleCommandGroup>()
+            .WithCommandGroup<ProjectCommandGroup>()
             .WithCommandGroup<UserCommands>()
             .Finish()
     .AddResponder<PingPongResponder>()
