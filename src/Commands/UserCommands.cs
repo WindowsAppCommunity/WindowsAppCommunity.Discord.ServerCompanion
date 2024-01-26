@@ -75,10 +75,8 @@ public class UserCommands : CommandGroup
             // Publish data to ipns
             await _client.Name.PublishAsync(cid, $"{renamed.Id}");
 
-            var peerCid = new Cid { Hash = key.Id };
-
             // Save new renamed
-            _userKeystore.ManagedUsers.Add(new(user, peerCid));
+            _userKeystore.ManagedUsers.Add(new(user, key.Id));
             await _userKeystore.SaveAsync();
 
             return (Result)await _feedbackService.SendContextualSuccessAsync($"User registration successful. Welcome to the community, <@{discordId}>!");
