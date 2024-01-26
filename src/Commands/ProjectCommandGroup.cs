@@ -79,27 +79,21 @@ public class ProjectCommandGroup : CommandGroup
                                 ),
                             }
                         ),
-                        // new ActionRowComponent(
-                        //     new[]
-                        //         {
-                        //         new StringSelectComponent
-                        //         (
-                        //             "project-type",
-                        //             [
-                        //                 new SelectOption("Red", "#FF0000"),
-                        //                 new SelectOption("Green", "#00FF00"),
-                        //                 new SelectOption("Blue", "#0000FF"),
-                        //                 new SelectOption("Cyan", "#00FFFF"),
-                        //                 new SelectOption("Magenta", "#FF00FF"),
-                        //                 new SelectOption("Yellow", "#FFFF00"),
-                        //                 new SelectOption("Black", "#000000"),
-                        //                 new SelectOption("White", "#FFFFFF")
-                        //             ],
-                        //             "Colours...",
-                        //             1,
-                        //             1,false
-                        //         )
-                        //      })
+                        new ActionRowComponent(
+                            new[]
+                                {
+                              new TextInputComponent
+                                (
+                                    "project-description2",
+                                    TextInputStyle.Paragraph,
+                                    "Project Description",
+                                    1,
+                                    2000,
+                                    true,
+                                    default,
+                                    "Project description here"
+                                )
+                             })
                        }
                    )
                )
