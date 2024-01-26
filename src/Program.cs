@@ -1,8 +1,13 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CommunityToolkit.Diagnostics;
+using Ipfs.Http;
+using Ipfs;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using OwlCore.Diagnostics;
 using OwlCore.Kubo;
+using OwlCore.Storage;
 using OwlCore.Storage.Memory;
 using OwlCore.Storage.SystemIO;
 using Remora.Commands.Extensions;
@@ -14,10 +19,12 @@ using Remora.Discord.Gateway.Extensions;
 using Remora.Discord.Gateway.Results;
 using Remora.Discord.Interactivity.Extensions;
 using Remora.Results;
+using System.Text;
 using WinAppCommunity.Discord.ServerCompanion;
 using WinAppCommunity.Discord.ServerCompanion.Commands;
 using WinAppCommunity.Discord.ServerCompanion.Interactivity;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
+using OwlCore.Extensions;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -78,13 +85,7 @@ await projectKeystore.LoadAsync(cancelTok);
 await publisherKeystore.LoadAsync(cancelTok);
 
 // Kubo setup (for ipfs access)
-var kubo = new KuboBootstrapper(kuboRepo.Path)
-{
-    ApiUri = new Uri("http://127.0.0.1:5021"),
-    GatewayUri = new Uri("http://127.0.0.1:8021"),
-};
-
-await kubo.StartAsync(cancelTok);
+var ipfsClient = await ConnectOrBootstrapNode(kuboRepo, cancelTok);
 Logger.LogInformation("Kubo is running and ready to use");
 
 // Service setup and init
@@ -93,7 +94,7 @@ var services = new ServiceCollection()
     .AddSingleton(userKeystore)
     .AddSingleton(projectKeystore)
     .AddSingleton(publisherKeystore)
-    .AddSingleton(kubo.Client)
+    .AddSingleton(ipfsClient)
     .AddDiscordGateway(_ => botToken)
     .AddDiscordCommands(enableSlash: true)
     .AddInteractivity()
@@ -139,3 +140,91 @@ switch (runResult.Error)
 }
 
 Console.WriteLine("Shutting down");
+
+
+async Task<IpfsClient> ConnectOrBootstrapNode(SystemFolder kuboRepo, CancellationToken cancellationToken)
+{
+    var apiAddr = await GetApiAsync(kuboRepo, cancellationToken);
+    var apiUri = TcpIpv4MultiAddressToUri(apiAddr);
+
+    // Repo locked, connect to running Kubo node.
+    if (await IsRepoLockedAsync(kuboRepo, cancellationToken))
+    {
+        Logger.LogInformation($"Connecting to running Kubo node at {apiUri}");
+        return new IpfsClient { ApiUri = apiUri };
+    }
+
+    // Repo not locked, Kubo not running
+    // Bootstrap it
+    Logger.LogInformation("Kubo is not running, bootstrapping");
+    Logger.LogWarning("Content won't be reachable from other nodes unless the ipfs daemon is started.");
+    var gatewayAddr = await GetGatewayAsync(kuboRepo, cancellationToken);
+    var gatewayUri = TcpIpv4MultiAddressToUri(gatewayAddr);
+
+    var bootstrapper = new KuboBootstrapper(kuboRepo.Path)
+    {
+        ApiUri = apiUri,
+        GatewayUri = gatewayUri,
+        RoutingMode = DhtRoutingMode.DhtClient,
+    };
+
+    await bootstrapper.StartAsync(cancellationToken);
+
+    return bootstrapper.Client;
+}
+
+async Task<bool> IsRepoLockedAsync(IFolder kuboRepo, CancellationToken cancellationToken)
+{
+    try
+    {
+        var target = await kuboRepo.GetFirstByNameAsync("repo.lock", cancellationToken);
+        return target is not null;
+    }
+    catch (FileNotFoundException)
+    {
+        return false;
+    }
+}
+
+Uri TcpIpv4MultiAddressToUri(MultiAddress multiAddress)
+{
+    return new Uri($"http://{multiAddress.Protocols[0].Value}:{multiAddress.Protocols[1].Value}");
+}
+
+async Task<MultiAddress> GetGatewayAsync(IFolder kuboRepo, CancellationToken cancellationToken)
+{
+    var file = (IFile)await kuboRepo.GetFirstByNameAsync("config", cancellationToken);
+
+    using var stream = await file.OpenStreamAsync(FileAccess.Read, cancellationToken);
+    var bytes = await stream.ToBytesAsync();
+
+    var strng = Encoding.UTF8.GetString(bytes).Trim();
+    var config = JObject.Parse(strng);
+
+    var addresses = config["Addresses"];
+    Guard.IsNotNull(addresses);
+
+    var gateway = addresses["Gateway"]?.Value<string>();
+    Guard.IsNotNullOrWhiteSpace(gateway);
+
+    return new MultiAddress(gateway);
+}
+
+async Task<MultiAddress> GetApiAsync(IFolder kuboRepo, CancellationToken cancellationToken)
+{
+    var file = (IFile)await kuboRepo.GetFirstByNameAsync("config", cancellationToken);
+
+    using var stream = await file.OpenStreamAsync(FileAccess.Read, cancellationToken);
+    var bytes = await stream.ToBytesAsync();
+
+    var strng = Encoding.UTF8.GetString(bytes).Trim();
+    var config = JObject.Parse(strng);
+
+    var addresses = config["Addresses"];
+    Guard.IsNotNull(addresses);
+
+    var api = addresses["API"]?.Value<string>();
+    Guard.IsNotNullOrWhiteSpace(api);
+
+    return new MultiAddress(api);
+}
