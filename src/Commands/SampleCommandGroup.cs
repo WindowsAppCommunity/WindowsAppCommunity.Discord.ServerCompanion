@@ -44,11 +44,10 @@ public class SampleCommandGroup : CommandGroup
             for (var i = 0; i < numberOfPages; i++)
             {
                 var builder = new EmbedBuilder().WithTitle($"Page {i}");
-
                 embeds.Add(builder.Build().Entity);
-            }
+            }            
 
-            await _feedbackService.SendContextualPaginatedMessageAsync(discordId, embeds, new());
+            await _feedbackService.SendContextualPaginatedMessageAsync(discordId, embeds);
             return Result.FromSuccess();
         }
         catch (Exception ex)
