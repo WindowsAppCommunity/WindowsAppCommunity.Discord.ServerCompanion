@@ -4,6 +4,7 @@ using Ipfs.Http;
 using OwlCore.Kubo;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
+using Remora.Discord.Commands.Attributes;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Discord.Extensions.Embeds;
@@ -80,6 +81,58 @@ public class UserCommands : CommandGroup
             await _userKeystore.SaveAsync();
 
             return (Result)await _feedbackService.SendContextualSuccessAsync($"User registration successful. Welcome to the community, <@{discordId}>!");
+        }
+        catch (Exception ex)
+        {
+            await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{ex}");
+            return (Result)new UnhandledExceptionError(ex);
+        }
+    }
+
+
+
+    [Command("test")]
+    [Description("Displays your user profile")]
+    public async Task<IResult> GetUserProfileAsync([AutocompleteProvider("autocomplete::users")] string userName)
+    {
+        try
+        {
+            var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Name == userName);
+            if (managedUser is null)
+            {
+                var result = (Result)new UserProfileNotFoundError();
+                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
+                return result;
+            }
+
+            managedUser.User = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
+
+            Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
+
+            var embedBuilder = new EmbedBuilder()
+                .WithAuthor(managedUser.User.Name);
+
+            if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
+                embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
+
+            var emailConnection = managedUser.User.Connections.FirstOrDefault(x => x is EmailConnection emailConnection) as EmailConnection;
+            if (emailConnection is not null)
+            {
+                var embedWithFieldResult = embedBuilder.AddField("Contact email", emailConnection.Email, inline: true);
+                if (!embedWithFieldResult.IsSuccess)
+                {
+                    await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{embedWithFieldResult.Error}");
+                    return embedWithFieldResult;
+                }
+
+                embedBuilder = embedWithFieldResult.Entity;
+            }
+
+            var embedBuildResult = embedBuilder.Build();
+            if (!embedBuildResult.IsSuccess)
+                return embedBuildResult;
+
+            return await _feedbackService.SendContextualEmbedAsync(embedBuildResult.Entity);
         }
         catch (Exception ex)
         {
