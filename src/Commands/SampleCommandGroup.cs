@@ -44,6 +44,21 @@ public class SampleCommandGroup : CommandGroup
         );
     }
 
+    /// <summary>
+    /// Displays an embed with a user-supplied word.
+    /// </summary>
+    /// <param name="word">The word.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    [Command("display-category")]
+    public async Task<Result> DisplayCategory([AutocompleteProvider("autocomplete::categoryDictionary")] string word)
+    {
+        return (Result)await _feedbackService.SendContextualNeutralAsync
+        (
+            $"Select store category is \"{word}\".",
+            ct: this.CancellationToken
+        );
+    }
+
     [Command("do-thing")]
     public async Task<IResult> MyCommand()
     {
