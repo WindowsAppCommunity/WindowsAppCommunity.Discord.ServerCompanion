@@ -121,37 +121,4 @@ public class ProjectCommandGroup : CommandGroup
             return (Result)new UnhandledExceptionError(ex);
         }
     }
-    [Command("dropdown")]
-    public async Task<IResult> SendDropdownAsync()
-    {
-        var embed = new Embed(Description: "Select a colour below.");
-        var options = new FeedbackMessageOptions(MessageComponents: new IMessageComponent[]
-        {
-            new ActionRowComponent(new[]
-            {
-                new StringSelectComponent
-                (
-                    CustomIDHelpers.CreateSelectMenuID("colour-dropdown"),
-                    new ISelectOption[]
-                    {
-                        new SelectOption("Red", "#FF0000"),
-                        new SelectOption("Green", "#00FF00"),
-                        new SelectOption("Blue", "#0000FF"),
-                        new SelectOption("Cyan", "#00FFFF"),
-                        new SelectOption("Magenta", "#FF00FF"),
-                        new SelectOption("Yellow", "#FFFF00"),
-                        new SelectOption("Black", "#000000"),
-                        new SelectOption("White", "#FFFFFF")
-                    },
-                    "Colours...",
-                    1,
-                    1
-                )
-            })
-        });
-
-        return await _feedbackService.SendContextualEmbedAsync(embed, options, this.CancellationToken);
-    }
-
-
 }

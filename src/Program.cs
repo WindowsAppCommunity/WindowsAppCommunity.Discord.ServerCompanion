@@ -25,6 +25,7 @@ using WinAppCommunity.Discord.ServerCompanion.Commands;
 using WinAppCommunity.Discord.ServerCompanion.Interactivity;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using OwlCore.Extensions;
+using WinAppCommunity.Discord.ServerCompanion.Autocomplete;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -107,6 +108,7 @@ var services = new ServiceCollection()
             .Finish()
     .AddResponder<PingPongResponder>()
     .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
+    .AddAutocompleteProvider<SampleAutoCompleteProvider>()
     .BuildServiceProvider();
 
 var log = services.GetRequiredService<ILogger<Program>>();
