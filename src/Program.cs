@@ -109,6 +109,7 @@ var services = new ServiceCollection()
     .AddResponder<PingPongResponder>()
     .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
     .AddAutocompleteProvider<SampleAutoCompleteProvider>()
+    .AddAutocompleteProvider<ProjectCategoryAutoCompleteProvider>()
     .AddAutocompleteProvider<UserAutoCompleteProvider>()
     .BuildServiceProvider();
 
