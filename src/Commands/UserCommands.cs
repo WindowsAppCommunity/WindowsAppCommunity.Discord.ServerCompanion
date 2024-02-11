@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Diagnostics;
 using Ipfs;
 using Ipfs.Http;
-using OwlCore.Kubo;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.Commands.Attributes;
@@ -49,6 +48,14 @@ public class UserCommands : CommandGroup
         {
             var discordId = _context.Interaction.Member.Value.User.Value.ID;
 
+            var existingUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Connections.OfType<DiscordConnection>().Any(o => o.DiscordId == discordId.ToString()));
+            if (existingUser is not null)
+            {
+                var result = (Result)new UserAlreadyRegistered();
+                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
+                return result;
+            }
+
             // Setup connections
             // Discord connection is required for users to operate within Discord bot.
             var connections = new List<ApplicationConnection>
@@ -64,7 +71,7 @@ public class UserCommands : CommandGroup
             var user = new User(name, connections.ToArray());
 
             // Get CID of new user object
-            var cid = await user.GetCidAsync(_client, CancellationToken.None);
+            var cid = await _client.Dag.PutAsync(user);
 
             // Create ipns address
             // Use name "temp" to create key
@@ -88,8 +95,6 @@ public class UserCommands : CommandGroup
             return (Result)new UnhandledExceptionError(ex);
         }
     }
-
-
 
     [Command("test")]
     [Description("Displays your user profile")]
