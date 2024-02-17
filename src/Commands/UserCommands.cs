@@ -42,7 +42,7 @@ public class UserCommands : CommandGroup
 
     [Command("register")]
     [Description("Register yourself as a community member")]
-    public async Task<IResult> RegisterUserAsync(string name, string? contactEmail)
+    public async Task<IResult> RegisterUserAsync([Description("The name to display on your profile")] string name, [Description("Optional public contact email")] string? contactEmail = null)
     {
         try
         {
@@ -96,7 +96,7 @@ public class UserCommands : CommandGroup
         }
     }
 
-    [Command("test")]
+    [Command("get")]
     [Description("Displays your user profile")]
     public async Task<IResult> GetUserProfileAsync([AutocompleteProvider("autocomplete::users")] string userName)
     {
