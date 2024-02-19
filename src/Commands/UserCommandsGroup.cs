@@ -192,4 +192,61 @@ public class UserCommands : CommandGroup
             return (Result)new UnhandledExceptionError(ex);
         }
     }
+
+    [Command("list")]
+    [Description("Displays your user profile")]
+    public async Task<IResult> GetUsersAsync([Description("The name to filter the result")] string name,
+     [Description("Page number")] int number,
+     [Description("Limit of the page")] int limit)
+    {
+        try
+        {
+            // TODO: WIP
+            var discordUser = _context.Interaction.Member.Value.User;
+            var discordId = discordUser.Value.ID;
+
+            var managedUser = _userKeystore.ManagedUsers.ToList();
+            if (managedUser is null)
+            {
+                var result = (Result)new UserProfileNotFoundError();
+                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
+                return result;
+            }
+
+
+            //  managedUser.User = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
+
+            // Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
+
+            //     var embedBuilder = new EmbedBuilder()
+            //       .WithAuthor(managedUser.User.Name);
+
+            //  if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
+            //    embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
+
+            //  var emailConnection = managedUser.User.Connections.OfType<EmailConnection>().FirstOrDefault();
+            // if (emailConnection is not null)
+            // {
+            //     var embedWithFieldResult = embedBuilder.AddField("Contact email", emailConnection.Email, inline: true);
+            //     if (!embedWithFieldResult.IsSuccess)
+            //     {
+            //         await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{embedWithFieldResult.Error}");
+            //         return embedWithFieldResult;
+            //     }
+
+            //     embedBuilder = embedWithFieldResult.Entity;
+            // }
+
+            // var embedBuildResult = embedBuilder.Build();
+            // if (!embedBuildResult.IsSuccess)
+            //     return embedBuildResult;
+
+            return await _feedbackService.SendContextualEmbedAsync(null);
+        }
+        catch (Exception ex)
+        {
+            await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{ex}");
+            return (Result)new UnhandledExceptionError(ex);
+        }
+    }
 }
