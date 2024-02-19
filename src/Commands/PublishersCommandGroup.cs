@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using CommunityToolkit.Diagnostics;
+using Ipfs;
 using Ipfs.Http;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
@@ -9,6 +10,7 @@ using Remora.Results;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
+using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
@@ -44,29 +46,63 @@ public class PublishersCommandGroup : CommandGroup
 
     [Command("register")]
     [Description("Register a publisher.")]
-    public async Task<IResult> RegisterPublisherAsync()
+    public async Task<IResult> RegisterPublisherAsync(
+        [Description("The name of the publisher.")]
+        string name,
+
+        [Description("A breif description of the publisher")]
+        string description,
+
+        [Description("An icon that reprents that publisher")]
+        Cid icon,
+
+        [Description("Optional. An accent color for the publisher")]
+        string? accentColor = null,
+
+        [Description("Optional. A public email address that can be used to contact this publisher.")]
+        string? contactEmail = null)
     {
         try
         {
             var discordId = _context.Interaction.Member.Value.User.Value.ID;
 
-            var user = _userKeystore.GetUserByDiscordId(discordId);
-            if (user is null)
-            {
-                var result = (Result)new PublisherAlreadyRegistered()();
-                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
-                return result;
-            }
-
-            var existingPublisher = _publisherKeystore.ManagedPublishers.FirstOrDefault(x => x.Publisher.Connections.OfType<DiscordConnection>().Any(o => o.DiscordId == discordId.ToString()));
-            if (existingPublisher is not null)
+            var userMap = await _userKeystore.GetUserMapByDiscordId(discordId);
+            if (userMap is null)
             {
                 var result = (Result)new PublisherAlreadyRegistered();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
                 return result;
             }
 
+            var existingPublisherByName = _publisherKeystore.ManagedPublishers.FirstOrDefault(p => p.Publisher.Name == name);
+            if (existingPublisherByName is not null)
+            {
+                var result = (Result)new PublisherAlreadyRegistered();
+                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
+                return result;
+            }
 
+            var contactEmailConnection = contactEmail is null ? null : new EmailConnection(contactEmail);
+
+            var newPublisher = new Publisher(name, description, icon, accentColor, links: [], projects: [], contactEmailConnection);
+            var newPublisherCid = await _client.Dag.PutAsync(newPublisher);
+
+            // Create publisher ipns
+            var key = await _client.Key.CreateKeyWithNameOfIdAsync();
+
+            // Publish publisher to ipns
+            await _client.Name.PublishAsync(newPublisherCid, key.Id);
+
+            // Modify user to contain new publisher.
+            userMap.User.Publishers = [.. userMap.User.Publishers, .. new[] { newPublisherCid }];
+
+            // Add modified user data to ipfs
+            var newUserCid = await _client.Dag.PutAsync(userMap.User);
+
+            // Publisher user to ipns
+            await _client.Name.PublishAsync(newUserCid, userMap.IpnsCid);
+
+            // TODO: Create embed for displaying publisher data.
         }
         catch (Exception ex)
         {
