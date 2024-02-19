@@ -144,16 +144,16 @@ public class UserCommands : CommandGroup
         }
     }
 
-    [Command("profile")]
+    [Command("view")]
     [Description("Displays your user profile")]
-    public async Task<IResult> GetProfileAsync()
+    public async Task<IResult> GetProfileAsync([AutocompleteProvider("autocomplete::cid")] string cid)
     {
         try
         {
             var discordUser = _context.Interaction.Member.Value.User;
             var discordId = discordUser.Value.ID;
 
-            var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Connections.Any(o => o is DiscordConnection discordConnection && discordConnection.DiscordId == $"{discordId}"));
+            var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.IpnsCid == cid);
             if (managedUser is null)
             {
                 var result = (Result)new Errors.UserNotFoundError();
