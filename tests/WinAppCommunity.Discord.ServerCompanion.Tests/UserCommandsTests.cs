@@ -53,7 +53,7 @@ public partial class UserCommandsTests
         var result = await _userCommands.GetProfileAsync();
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.IsInstanceOfType(result.Error, typeof(UserProfileNotFoundError));
+        Assert.IsInstanceOfType(result.Error, typeof(Commands.Errors.UserNotFoundError));
     }
 
     [DataRow("userA", "test.ing@example.com")]

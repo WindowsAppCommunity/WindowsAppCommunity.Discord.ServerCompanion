@@ -50,7 +50,7 @@ public class UserCommands : CommandGroup
             var existingUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Connections.OfType<DiscordConnection>().Any(o => o.DiscordId == discordId.ToString()));
             if (existingUser is not null)
             {
-                var result = (Result)new UserAlreadyRegistered();
+                var result = (Result)new AlreadyRegistered();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
                 return result;
             }
@@ -104,7 +104,7 @@ public class UserCommands : CommandGroup
             var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Name == userName);
             if (managedUser is null)
             {
-                var result = (Result)new UserProfileNotFoundError();
+                var result = (Result)new Errors.UserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
@@ -156,7 +156,7 @@ public class UserCommands : CommandGroup
             var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Connections.Any(o => o is DiscordConnection discordConnection && discordConnection.DiscordId == $"{discordId}"));
             if (managedUser is null)
             {
-                var result = (Result)new UserProfileNotFoundError();
+                var result = (Result)new Errors.UserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
