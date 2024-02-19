@@ -73,14 +73,10 @@ public class UserCommands : CommandGroup
             var cid = await _client.Dag.PutAsync(user);
 
             // Create ipns address
-            // Use name "temp" to create key
-            var key = await _client.Key.CreateAsync(name: "temp", "ed25519", 4096);
-
-            // Rename key name to the key id
-            var renamed = await _client.Key.RenameAsync("temp", $"{key.Id}");
+            var key = await _client.Key.CreateKeyWithNameOfIdAsync();
 
             // Publish data to ipns
-            await _client.Name.PublishAsync(cid, $"{renamed.Id}");
+            await _client.Name.PublishAsync(cid, $"{key.Id}");
 
             // Save new renamed
             _userKeystore.ManagedUsers.Add(new(user, key.Id));
