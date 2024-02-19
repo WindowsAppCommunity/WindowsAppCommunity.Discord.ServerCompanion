@@ -120,8 +120,7 @@ public class UserCommands : CommandGroup
             if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
                 embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
 
-            var emailConnection = managedUser.User.Connections.FirstOrDefault(x => x is EmailConnection emailConnection) as EmailConnection;
-            if (emailConnection is not null)
+            if (managedUser.User.Connections.OfType<EmailConnection>().FirstOrDefault() is EmailConnection emailConnection)
             {
                 var embedWithFieldResult = embedBuilder.AddField("Contact email", emailConnection.Email, inline: true);
                 if (!embedWithFieldResult.IsSuccess)
@@ -173,7 +172,7 @@ public class UserCommands : CommandGroup
             if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
                 embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
 
-            var emailConnection = managedUser.User.Connections.FirstOrDefault(x => x is EmailConnection emailConnection) as EmailConnection;
+            var emailConnection = managedUser.User.Connections.OfType<EmailConnection>().FirstOrDefault();
             if (emailConnection is not null)
             {
                 var embedWithFieldResult = embedBuilder.AddField("Contact email", emailConnection.Email, inline: true);

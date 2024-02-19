@@ -58,12 +58,7 @@ namespace WinAppCommunity.Discord.ServerCompanion.Autocomplete
         public string Identity => "autocomplete::categoryDictionary";
 
         /// <inheritdoc/>
-        public ValueTask<IReadOnlyList<IApplicationCommandOptionChoice>> GetSuggestionsAsync
-        (
-            IReadOnlyList<IApplicationCommandInteractionDataOption> options,
-            string userInput,
-            CancellationToken ct = default
-        )
+        public ValueTask<IReadOnlyList<IApplicationCommandOptionChoice>> GetSuggestionsAsync(IReadOnlyList<IApplicationCommandInteractionDataOption> options, string userInput, CancellationToken ct = default)
         {
             return new ValueTask<IReadOnlyList<IApplicationCommandOptionChoice>>
             (

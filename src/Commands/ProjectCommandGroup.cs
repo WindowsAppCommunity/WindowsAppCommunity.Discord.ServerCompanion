@@ -14,23 +14,10 @@ using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 namespace WinAppCommunity.Discord.ServerCompanion;
 
 [Group("commands")]
-public class ProjectCommandGroup : CommandGroup
+public class ProjectCommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI) : CommandGroup
 {
-    private readonly IInteractionContext _interactionContext;
-    private readonly IFeedbackService _feedbackService;
-
-    private readonly IDiscordRestInteractionAPI _interactionAPI;
-
-    public ProjectCommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI)
-    {
-        _interactionContext = interactionContext;
-        _feedbackService = feedbackService;
-        _interactionAPI = interactionAPI;
-    }
-
     [Command("register-project")]
     [SuppressInteractionResponse(true)]
-
     public async Task<IResult> TestInteractivity()
     {
         try
@@ -99,17 +86,17 @@ public class ProjectCommandGroup : CommandGroup
                )
            );
 
-            var result = await _interactionAPI.CreateInteractionResponseAsync
+            var result = await interactionAPI.CreateInteractionResponseAsync
             (
-                _interactionContext.Interaction.ID,
-                _interactionContext.Interaction.Token,
+                interactionContext.Interaction.ID,
+                interactionContext.Interaction.Token,
                 response,
                 ct: this.CancellationToken
             );
 
             if (!result.IsSuccess)
             {
-                await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{result.Error}");
+                await feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{result.Error}");
                 return result;
             }
 
@@ -117,7 +104,7 @@ public class ProjectCommandGroup : CommandGroup
         }
         catch (Exception ex)
         {
-            await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{ex}");
+            await feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{ex}");
             return (Result)new UnhandledExceptionError(ex);
         }
     }

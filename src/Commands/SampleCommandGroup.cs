@@ -124,19 +124,6 @@ public class SampleCommandGroup : CommandGroup
             {
                 new ButtonComponent(Label: "Test", Style: ButtonComponentStyle.Primary, CustomID: CustomIDHelpers.CreateButtonID("test-button"))
             }),
-
-            new ActionRowComponent(new IMessageComponent[]
-            {
-                new TextInputComponent(
-                        "text-input",
-                        TextInputStyle.Short,
-                        "Short Text",
-                        1,
-                        32,
-                        true,
-                        default,
-                        "Short Text here")
-            })
         });
 
         var res = await _feedbackService.SendContextualAsync(options: options, ct: this.CancellationToken);
