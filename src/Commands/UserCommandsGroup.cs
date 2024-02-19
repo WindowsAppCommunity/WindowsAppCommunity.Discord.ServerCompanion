@@ -50,7 +50,7 @@ public class UserCommands : CommandGroup
             var existingUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Connections.OfType<DiscordConnection>().Any(o => o.DiscordId == discordId.ToString()));
             if (existingUser is not null)
             {
-                var result = (Result)new AlreadyRegistered();
+                var result = (Result)new UserAlreadyRegistered();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
                 return result;
             }

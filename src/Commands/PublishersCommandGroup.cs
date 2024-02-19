@@ -53,7 +53,7 @@ public class PublishersCommandGroup : CommandGroup
             var user = _userKeystore.GetUserByDiscordId(discordId);
             if (user is null)
             {
-                var result = (Result)new AlreadyRegistered();
+                var result = (Result)new PublisherAlreadyRegistered()();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
                 return result;
             }
@@ -61,7 +61,7 @@ public class PublishersCommandGroup : CommandGroup
             var existingPublisher = _publisherKeystore.ManagedPublishers.FirstOrDefault(x => x.Publisher.Connections.OfType<DiscordConnection>().Any(o => o.DiscordId == discordId.ToString()));
             if (existingPublisher is not null)
             {
-                var result = (Result)new AlreadyRegistered();
+                var result = (Result)new PublisherAlreadyRegistered();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
                 return result;
             }
