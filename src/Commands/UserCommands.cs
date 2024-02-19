@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Diagnostics;
-using Ipfs;
 using Ipfs.Http;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
@@ -197,14 +196,4 @@ public class UserCommands : CommandGroup
             return (Result)new UnhandledExceptionError(ex);
         }
     }
-}
-
-/// <summary>
-/// Represents a single user managed by the community.
-/// </summary>
-/// <param name="User">The resolved user data.</param>
-/// <param name="IpnsCid">A CID that can be used to resolve the user data</param>
-public record ManagedUserMap(User User, Cid IpnsCid)
-{
-    public User User { get; set; } = User;
 }

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using CommunityToolkit.Diagnostics;
 using Ipfs.Http;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
@@ -7,6 +8,7 @@ using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
+using WinAppCommunity.Sdk.Models;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
