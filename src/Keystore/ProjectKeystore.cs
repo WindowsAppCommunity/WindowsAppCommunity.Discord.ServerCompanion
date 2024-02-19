@@ -7,7 +7,7 @@ namespace WinAppCommunity.Discord.ServerCompanion.Keystore;
 
 public class ProjectKeystore(IModifiableFolder folder) : SettingsBase(folder, SettingsSerializer.Singleton)
 {
-    public List<ManagedProjectMap> ManagedIpfsKeys
+    public List<ManagedProjectMap> ManagedProjects
     {
         get => GetSetting(() => new List<ManagedProjectMap>());
         set => SetSetting(value);
