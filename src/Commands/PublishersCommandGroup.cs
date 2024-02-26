@@ -76,7 +76,7 @@ public partial class PublishersCommandGroup : CommandGroup
             var userMap = await _userKeystore.GetUserMapByDiscordId(discordId);
             if (userMap is null)
             {
-                var result = (Result)new PublisherAlreadyRegistered();
+                var result = (Result)new UserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
                 return result;
             }
@@ -194,11 +194,12 @@ public partial class PublishersCommandGroup : CommandGroup
                 return result;
             }
 
-            // TODO: Create embed for displaying publisher data.
-            // temp: return simple message with publisher data
-            var returnMessage = $"Publisher registration successful.\nPublisher name: {publisher.Name}\nPublisher description: {publisher.Description}\nPublisher CID: {publisherRes.ResultCid}\nPublisher IPNS: {cid}\nPublisher icon: {publisher.Icon}\nPublisher accent color: {publisher.AccentColor}\nPublisher contact email: {publisher.ContactEmail?.Email}";
+            // Create embed for displaying publisher data.
+            var publisherEmbedBuilder = publisher.ToEmbedBuilder();
 
-            embeds = embedBuilder.WithDescription(returnMessage).WithColour(Color.Green).Build().GetEntityOrThrowError().IntoList();
+            publisherEmbedBuilder.AddField("IPNS CID", cid.ToString(), inline: true);
+
+            embeds = publisherEmbedBuilder.Build().GetEntityOrThrowError().IntoList();
             return (Result)await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
         }
         catch (Exception ex)

@@ -1,5 +1,7 @@
-﻿using Ipfs;
+﻿using System.Drawing;
+using Ipfs;
 using Ipfs.Http;
+using Remora.Discord.Extensions.Embeds;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
@@ -29,5 +31,32 @@ internal static class PublisherExtensions
 
         // Return publisher map data
         return (publisherMap, publisherRes.ResultCid);
+    }
+
+    internal static EmbedBuilder ToEmbedBuilder(this Publisher publisher)
+    {
+        var builder = new EmbedBuilder()
+            .WithAuthor(publisher.Name)
+            .WithDescription(publisher.Description)
+            .WithThumbnailUrl($"https://ipfs.io/ipfs/{publisher.Icon}");
+
+        builder.AddField("Owner", publisher.Owner);
+
+        if (publisher.ContactEmail is not null)
+            builder.AddField("Email", publisher.ContactEmail.Email);
+
+        if (publisher.AccentColor is not null)
+            builder.WithColour(ColorTranslator.FromHtml(publisher.AccentColor));
+
+        if (publisher.Links.Length > 0)
+            builder.AddField("Links", string.Join("\n", publisher.Links.Select(x => $"[{x.Name}]({x.Url})")));
+
+        if (publisher.Projects.Length > 0)
+            builder.AddField("Projects", string.Join("\n", publisher.Projects.Select(x => x.ToString())));
+
+        if (publisher.Subpublishers.Length > 0)
+            builder.AddField("Subpublishers", string.Join("\n", publisher.Subpublishers.Select(x => x.ToString())));
+
+        return builder;
     }
 }
