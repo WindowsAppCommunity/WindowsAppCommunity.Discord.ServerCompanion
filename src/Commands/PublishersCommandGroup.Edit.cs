@@ -11,6 +11,7 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
+using System.Xml.Linq;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -52,7 +53,7 @@ public partial class PublishersCommandGroup
 
                 var embedBuilder = new EmbedBuilder()
                     .WithColour(Color.YellowGreen)
-                    .WithTitle("Publisher registration")
+                    .WithTitle("Updating publisher")
                     .WithCurrentTimestamp();
 
                 var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
@@ -71,6 +72,9 @@ public partial class PublishersCommandGroup
                     await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
                     return result;
                 }
+
+                embeds = embedBuilder.WithTitle($"Updating publisher {publisher.Name}").Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
 
                 // Update data
                 publisher.Name = name;
@@ -92,11 +96,48 @@ public partial class PublishersCommandGroup
         }
 
         [Command("description")]
-        public async Task<IResult> EditDescriptionAsync([Description("The cid of the publisher to edit.")] string cid, [Description("The new description for the publisher")] string description)
+        public async Task<IResult> EditDescriptionAsync([Description("The ipns cid of the publisher to edit.")] string ipnsCid, [Description("The new description for the publisher")] string description)
         {
             try
             {
-                throw new NotImplementedException();
+                Cid cid = ipnsCid;
+
+                var embedBuilder = new EmbedBuilder()
+                    .WithColour(Color.YellowGreen)
+                    .WithTitle("Updating publisher")
+                    .WithCurrentTimestamp();
+
+                var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
+                var followUpRes = await _interactionAPI.CreateFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, embeds: new(embeds));
+                var followUpMsg = followUpRes.GetEntityOrThrowError();
+
+                // Resolve publisher data
+                embeds = embedBuilder.WithDescription("Resolving publisher data").Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+                var publisherRes = await cid.ResolveIpnsDagAsync<Publisher>(_client, CancellationToken.None);
+                var publisher = publisherRes.Result;
+
+                if (publisher is null)
+                {
+                    var result = (Result)new PublisherNotFoundError();
+                    await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
+                    return result;
+                }
+
+                embeds = embedBuilder.WithTitle($"Updating publisher {publisher.Name}").Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+
+                // Update data
+                publisher.Description = description;
+                
+                embeds = embedBuilder.WithDescription("Saving publisher data").Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+                var res = await SaveRegisteredPublisherAsync(publisher, cid);
+                
+                embeds = embedBuilder.WithDescription($"Publisher description updated").WithColour(Color.Green).Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+
+                return res;
             }
             catch (Exception ex)
             {
@@ -106,11 +147,48 @@ public partial class PublishersCommandGroup
         }
 
         [Command("icon")]
-        public async Task<IResult> EditIconAsync([Description("The cid of the publisher to edit.")] string cid, [Description("The new cid for the publisher icon")] Cid icon)
+        public async Task<IResult> EditIconAsync([Description("The ipns cid of the publisher to edit.")] string ipnsCid, [Description("The new cid for the publisher icon")] string icon)
         {
             try
             {
-                throw new NotImplementedException();
+                Cid cid = ipnsCid;
+
+                var embedBuilder = new EmbedBuilder()
+                    .WithColour(Color.YellowGreen)
+                    .WithTitle("Publisher")
+                    .WithCurrentTimestamp();
+
+                var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
+                var followUpRes = await _interactionAPI.CreateFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, embeds: new(embeds));
+                var followUpMsg = followUpRes.GetEntityOrThrowError();
+
+                // Resolve publisher data
+                embeds = embedBuilder.WithDescription("Resolving publisher data").Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+                var publisherRes = await cid.ResolveIpnsDagAsync<Publisher>(_client, CancellationToken.None);
+                var publisher = publisherRes.Result;
+
+                if (publisher is null)
+                {
+                    var result = (Result)new PublisherNotFoundError();
+                    await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
+                    return result;
+                }
+
+                embeds = embedBuilder.WithTitle($"Updating publisher {publisher.Name}").Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+
+                // Update data
+                publisher.Icon = icon;
+                
+                embeds = embedBuilder.WithDescription("Saving publisher data").Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+                var res = await SaveRegisteredPublisherAsync(publisher, cid);
+                
+                embeds = embedBuilder.WithDescription($"Publisher icon updated").WithColour(Color.Green).Build().GetEntityOrThrowError().IntoList();
+                await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+
+                return res;
             }
             catch (Exception ex)
             {

@@ -38,7 +38,7 @@ internal static class PublisherExtensions
         var builder = new EmbedBuilder()
             .WithAuthor(publisher.Name)
             .WithDescription(publisher.Description)
-            .WithThumbnailUrl($"https://ipfs.io/ipfs/{publisher.Icon}");
+            .WithThumbnailUrl($"https://ipfs.io/ipfs/{publisher.Icon}?filename=image.gif");
 
         builder.AddField("Owner", publisher.Owner);
 
