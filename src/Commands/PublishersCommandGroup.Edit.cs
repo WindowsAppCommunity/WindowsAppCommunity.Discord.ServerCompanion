@@ -51,9 +51,9 @@ public partial class PublishersCommandGroup
                 Cid cid = ipnsCid;
 
                 var embedBuilder = new EmbedBuilder()
-                .WithColour(Color.YellowGreen)
-                .WithTitle("Publisher registration")
-                .WithCurrentTimestamp();
+                    .WithColour(Color.YellowGreen)
+                    .WithTitle("Publisher registration")
+                    .WithCurrentTimestamp();
 
                 var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
                 var followUpRes = await _interactionAPI.CreateFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, embeds: new(embeds));
@@ -89,14 +89,14 @@ public partial class PublishersCommandGroup
                 await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{ex}");
                 return (Result)new UnhandledExceptionError(ex);
             }
-        }/*
+        }
 
         [Command("description")]
         public async Task<IResult> EditDescriptionAsync([Description("The cid of the publisher to edit.")] string cid, [Description("The new description for the publisher")] string description)
         {
             try
             {
-
+                throw new NotImplementedException();
             }
             catch (Exception ex)
             {
@@ -110,7 +110,7 @@ public partial class PublishersCommandGroup
         {
             try
             {
-
+                throw new NotImplementedException();
             }
             catch (Exception ex)
             {
@@ -124,7 +124,7 @@ public partial class PublishersCommandGroup
         {
             try
             {
-
+                throw new NotImplementedException();
             }
             catch (Exception ex)
             {
@@ -138,14 +138,14 @@ public partial class PublishersCommandGroup
         {
             try
             {
-
+                throw new NotImplementedException();
             }
             catch (Exception ex)
             {
                 await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{ex}");
                 return (Result)new UnhandledExceptionError(ex);
             }
-        }*/
+        }
 
         private async Task<IResult> SaveRegisteredPublisherAsync(Publisher publisher, Cid cid)
         {
