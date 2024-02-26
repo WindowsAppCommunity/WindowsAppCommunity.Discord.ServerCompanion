@@ -2,28 +2,26 @@
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Autocomplete;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Sdk.Models;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Autocomplete;
 
-/// <inheritdoc />
-public class UserAutoCompleteProvider(UserKeystore users) : IAutocompleteProvider
+public class PublishersAutoCompleteProvider(PublisherKeystore publishers) : IAutocompleteProvider
 {
-    private readonly UserKeystore _users = users;
+    private readonly PublisherKeystore _publishers = publishers;
 
-    public string Identity { get; } = "autocomplete::users";
+    public string Identity => "autocomplete::publishers";
 
     public ValueTask<IReadOnlyList<IApplicationCommandOptionChoice>> GetSuggestionsAsync(IReadOnlyList<IApplicationCommandInteractionDataOption> options, string userInput, CancellationToken ct = default)
     {
-        var users = _users.ManagedUsers
-            .Where(x => x.User.Name?.Contains(userInput) ?? false)
+        var publishers = _publishers.ManagedPublishers
+            .Where(x => x.Publisher.Name?.Contains(userInput) ?? false)
             .Select(x => 
                 new ApplicationCommandOptionChoice(
-                    Name: x.User.Name ?? throw new InvalidDataException(),
+                    Name: x.Publisher.Name ?? throw new InvalidDataException(),
                     Value: x.IpnsCid.ToString())
             )
             .ToList();
 
-        return new ValueTask<IReadOnlyList<IApplicationCommandOptionChoice>>(users);
+        return new ValueTask<IReadOnlyList<IApplicationCommandOptionChoice>>(publishers);
     }
 }

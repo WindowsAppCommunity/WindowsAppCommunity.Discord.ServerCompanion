@@ -17,9 +17,9 @@ internal static class UserExtensions
     /// <param name="keystore">The keystore to retrieve the user from.</param>
     /// <param name="discordId">The discordId of the user to retrieve.</param>
     /// <returns></returns>
-    public static async Task<ManagedUserMap?> GetUserMapByDiscordId(this UserKeystore keystore, Snowflake discordId)
+    internal static async Task<ManagedUserMap?> GetUserMapByDiscordId(this UserKeystore keystore, Snowflake discordId)
     {
-        return keystore.ManagedUsers.FirstOrDefault(um => 
+        return keystore.ManagedUsers.FirstOrDefault(um =>
             um.User.Connections
                 .OfType<DiscordConnection>()
                 .FirstOrDefault()?.DiscordId == discordId.ToString()

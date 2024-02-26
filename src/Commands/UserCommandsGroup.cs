@@ -100,12 +100,20 @@ public class UserCommands : CommandGroup
             var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Name == userName);
             if (managedUser is null)
             {
-                var result = (Result)new Errors.UserNotFoundError();
+                var result = (Result)new UserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
 
-            managedUser.User = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
+            var userRes = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
+            if (userRes.Result is null)
+            {
+                var result = (Result)new UserNotFoundError();
+                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
+                return result;
+            }
+
+            managedUser.User = userRes.Result;
 
             Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
 
@@ -152,12 +160,21 @@ public class UserCommands : CommandGroup
             var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.IpnsCid == cid);
             if (managedUser is null)
             {
-                var result = (Result)new Errors.UserNotFoundError();
+                var result = (Result)new ErrorsUserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
 
-            managedUser.User = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
+            var userRes = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
+            if (userRes.Result is null)
+            {
+                var result = (Result)new UserNotFoundError();
+                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
+                return result;
+            }
+
+            var user = userRes.Result;
+            managedUser.User = user;
 
             Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
 
@@ -208,7 +225,7 @@ public class UserCommands : CommandGroup
             var managedUser = _userKeystore.ManagedUsers.ToList();
             if (managedUser is null)
             {
-                var result = (Result)new UserProfileNotFoundError();
+                var result = (Result)new UserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
