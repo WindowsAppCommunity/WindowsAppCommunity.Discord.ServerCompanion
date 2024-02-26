@@ -1,14 +1,19 @@
 ﻿using CommunityToolkit.Diagnostics;
+using Ipfs;
 using Ipfs.Http;
+using OwlCore.Extensions;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
+using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.Commands.Attributes;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
+using System.Drawing;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
@@ -23,6 +28,7 @@ public class UserCommands : CommandGroup
     private readonly IInteractionContext _context;
     private readonly UserKeystore _userKeystore;
     private readonly IpfsClient _client;
+    private readonly IDiscordRestInteractionAPI _interactionAPI;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UserCommands"/> class.
@@ -31,12 +37,13 @@ public class UserCommands : CommandGroup
     /// <param name="context">The context of the invoked interaction.</param>
     /// <param name="userKeystore">A keystore that stores all known user keys.</param>
     /// <param name="client">The client to use when interacting with IPFS.</param>
-    public UserCommands(IInteractionContext context, IFeedbackService feedbackService, UserKeystore userKeystore, IpfsClient client)
+    public UserCommands(IInteractionContext context, IFeedbackService feedbackService, UserKeystore userKeystore, IpfsClient client, IDiscordRestInteractionAPI interactionApi)
     {
         _context = context;
         _feedbackService = feedbackService;
         _userKeystore = userKeystore;
         _client = client;
+        _interactionAPI = interactionApi;
     }
 
     [Command("register")]
@@ -91,69 +98,22 @@ public class UserCommands : CommandGroup
         }
     }
 
-    [Command("get")]
-    [Description("Displays your user profile")]
-    public async Task<IResult> GetUserProfileAsync([AutocompleteProvider("autocomplete::users")] string userName)
-    {
-        try
-        {
-            var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.User.Name == userName);
-            if (managedUser is null)
-            {
-                var result = (Result)new UserNotFoundError();
-                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
-                return result;
-            }
-
-            var userRes = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
-            if (userRes.Result is null)
-            {
-                var result = (Result)new UserNotFoundError();
-                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
-                return result;
-            }
-
-            managedUser.User = userRes.Result;
-
-            Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
-
-            var embedBuilder = new EmbedBuilder()
-                .WithAuthor(managedUser.User.Name);
-
-            if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
-                embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
-
-            if (managedUser.User.Connections.OfType<EmailConnection>().FirstOrDefault() is EmailConnection emailConnection)
-            {
-                var embedWithFieldResult = embedBuilder.AddField("Contact email", emailConnection.Email, inline: true);
-                if (!embedWithFieldResult.IsSuccess)
-                {
-                    await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{embedWithFieldResult.Error}");
-                    return embedWithFieldResult;
-                }
-
-                embedBuilder = embedWithFieldResult.Entity;
-            }
-
-            var embedBuildResult = embedBuilder.Build();
-            if (!embedBuildResult.IsSuccess)
-                return embedBuildResult;
-
-            return await _feedbackService.SendContextualEmbedAsync(embedBuildResult.Entity);
-        }
-        catch (Exception ex)
-        {
-            await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{ex}");
-            return (Result)new UnhandledExceptionError(ex);
-        }
-    }
-
     [Command("view")]
     [Description("Displays your user profile")]
-    public async Task<IResult> GetProfileAsync([AutocompleteProvider("autocomplete::cid")] string cid)
+    public async Task<IResult> GetProfileAsync([Description("Enter user CID")] string ipnsCid)
     {
         try
         {
+            Cid cid = ipnsCid;
+
+            var embedBuilder = new EmbedBuilder()
+                .WithColour(Color.YellowGreen)
+                .WithTitle("Displays user profile")
+                .WithCurrentTimestamp();
+            var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
+            var followUpRes = await _interactionAPI.CreateFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, embeds: new(embeds));
+            var followUpMsg = followUpRes.GetEntityOrThrowError();
+
             var discordUser = _context.Interaction.Member.Value.User;
             var discordId = discordUser.Value.ID;
 
@@ -161,9 +121,13 @@ public class UserCommands : CommandGroup
             if (managedUser is null)
             {
                 var result = (Result)new UserNotFoundError();
+
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
+
+            embeds = embedBuilder.WithDescription("Resolving ipns D.A.G async").Build().GetEntityOrThrowError().IntoList();
+            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
 
             var userRes = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
             if (userRes.Result is null)
@@ -177,9 +141,6 @@ public class UserCommands : CommandGroup
             managedUser.User = user;
 
             Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
-
-            var embedBuilder = new EmbedBuilder()
-                .WithAuthor(managedUser.User.Name);
 
             if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
                 embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
@@ -201,7 +162,10 @@ public class UserCommands : CommandGroup
             if (!embedBuildResult.IsSuccess)
                 return embedBuildResult;
 
-            return await _feedbackService.SendContextualEmbedAsync(embedBuildResult.Entity);
+            var returnMessage = $"\nUser name: {managedUser.User.Name}\nUser description: {managedUser.User.MarkdownAboutMe}\nUser CID: {managedUser.IpnsCid}\nUser contact email: {emailConnection}";
+
+            embeds = embedBuilder.WithDescription($"User profile retrieval successful\n{returnMessage}").Build().GetEntityOrThrowError().IntoList();
+            return (Result)await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
         }
         catch (Exception ex)
         {
