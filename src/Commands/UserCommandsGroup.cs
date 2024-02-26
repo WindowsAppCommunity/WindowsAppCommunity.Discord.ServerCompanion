@@ -160,7 +160,7 @@ public class UserCommands : CommandGroup
             var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.IpnsCid == cid);
             if (managedUser is null)
             {
-                var result = (Result)new ErrorsUserNotFoundError();
+                var result = (Result)new UserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
