@@ -28,11 +28,12 @@ public partial class UserCommandsTests
         var bot = new MockUser { ID = Snowflake.CreateTimestampSnowflake(DateTime.UtcNow + TimeSpan.FromSeconds(1)) };
 
         var interaction = new MockInteraction { User = user, Member = new MockGuildMember { User = user } };
-        IInteractionContext interactionContext = new MockInteractionContext { Interaction = interaction };
+        var interactionContext = new MockInteractionContext { Interaction = interaction };
+        var mockDiscordRestInteractionApi = new MockDiscordRestInteractionAPI();
 
         IFeedbackService feedback = new MockFeedbackService(messageAuthor: user);
 
-        _userCommands = new UserCommands(interactionContext, feedback, keystore, TestFixture.Client);
+        _userCommands = new UserCommands(interactionContext, feedback, keystore, TestFixture.Client, mockDiscordRestInteractionApi);
     }
 
     [DataRow("userA", "test.ing@example.com")]
@@ -46,24 +47,25 @@ public partial class UserCommandsTests
     }
 
     [TestMethod]
-    public async Task GetProfileWithoutRegistration()
+    [DataRow("/ipns/TODO")]
+    public async Task GetProfileWithoutRegistration(string userIpnsCid)
     {
         Assert.IsNotNull(_userCommands);
 
-        var result = await _userCommands.GetProfileAsync();
+        var result = await _userCommands.GetProfileAsync(userIpnsCid);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.IsInstanceOfType(result.Error, typeof(Commands.Errors.UserNotFoundError));
+        Assert.IsInstanceOfType(result.Error, typeof(UserNotFoundError));
     }
 
-    [DataRow("userA", "test.ing@example.com")]
+    [DataRow("/ipns/TODO", "userA", "test.ing@example.com")]
     [TestMethod]
-    public async Task RegisterUserAndGetProfile(string name, string contactEmail)
+    public async Task RegisterUserAndGetProfile(string userIpnsCid, string name, string contactEmail)
     {
         Assert.IsNotNull(_userCommands);
         await RegisterUser(name, contactEmail);
 
-        var result = await _userCommands.GetProfileAsync();
+        var result = await _userCommands.GetProfileAsync(userIpnsCid);
 
         Assert.IsTrue(result.IsSuccess, result.Error?.Message);
 
