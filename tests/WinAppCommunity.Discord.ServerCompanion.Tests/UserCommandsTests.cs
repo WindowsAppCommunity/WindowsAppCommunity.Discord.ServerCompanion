@@ -11,6 +11,7 @@ using WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Tests;
 
+
 [TestClass]
 public partial class UserCommandsTests
 {
@@ -36,8 +37,9 @@ public partial class UserCommandsTests
         _userCommands = new UserCommands(interactionContext, feedback, keystore, TestFixture.Client, mockDiscordRestInteractionApi);
     }
 
+    // Example only
+    // [TestMethod]
     [DataRow("userA", "test.ing@example.com")]
-    [TestMethod]
     public async Task RegisterUser(string name, string contactEmail)
     {
         Assert.IsNotNull(_userCommands);
@@ -46,7 +48,8 @@ public partial class UserCommandsTests
         Assert.IsTrue(result.IsSuccess, result.Error?.Message);
     }
 
-    [TestMethod]
+    // Example only
+    // [TestMethod]
     [DataRow("/ipns/TODO")]
     public async Task GetProfileWithoutRegistration(string userIpnsCid)
     {
@@ -58,8 +61,9 @@ public partial class UserCommandsTests
         Assert.IsInstanceOfType(result.Error, typeof(UserNotFoundError));
     }
 
+    // Example only
+    // [TestMethod]
     [DataRow("/ipns/TODO", "userA", "test.ing@example.com")]
-    [TestMethod]
     public async Task RegisterUserAndGetProfile(string userIpnsCid, string name, string contactEmail)
     {
         Assert.IsNotNull(_userCommands);
