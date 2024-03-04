@@ -11,7 +11,7 @@ public class MockMessage : IMessage
 
     public required IUser Author { get; init; }
 
-    public required string Content { get; init; }
+    public required string Content { get; set; }
 
     public DateTimeOffset Timestamp => throw new NotImplementedException();
 
@@ -29,7 +29,7 @@ public class MockMessage : IMessage
 
     public IReadOnlyList<IAttachment> Attachments { get; } = new List<IAttachment>();
 
-    public IReadOnlyList<IEmbed> Embeds { get; init; } = new List<IEmbed>();
+    public IReadOnlyList<IEmbed> Embeds { get; set; } = new List<IEmbed>();
 
     public Optional<IReadOnlyList<IReaction>> Reactions { get; } = new List<IReaction>();
 
@@ -45,7 +45,7 @@ public class MockMessage : IMessage
 
     public Optional<IPartialApplication> Application => throw new NotImplementedException();
 
-    public Optional<Snowflake> ApplicationID => throw new NotImplementedException();
+    public Optional<Snowflake> ApplicationID { get; } = new Snowflake(Guid.Empty.ToByteArray().Aggregate((x, y) => (byte)(x + y)));
 
     public Optional<IMessageReference> MessageReference => throw new NotImplementedException();
 

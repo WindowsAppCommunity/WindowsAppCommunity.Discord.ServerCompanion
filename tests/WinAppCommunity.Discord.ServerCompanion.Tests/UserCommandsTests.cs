@@ -11,11 +11,11 @@ using WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Tests;
 
-
 [TestClass]
 public partial class UserCommandsTests
 {
     private static UserCommands? _userCommands;
+    private static UserKeystore? _keystore;
 
     [ClassInitialize]
     public static async Task Setup(TestContext context)
@@ -23,7 +23,8 @@ public partial class UserCommandsTests
         Assert.IsNotNull(context.DeploymentDirectory);
         var workingFolder = await TestFixture.SafeCreateWorkingFolder(new SystemFolder(context.DeploymentDirectory), nameof(UserCommandsTests));
 
-        UserKeystore keystore = new UserKeystore(workingFolder);
+        _keystore = new UserKeystore(workingFolder);
+        _keystore.ResetAllSettings();
 
         var user = new MockUser { ID = Snowflake.CreateTimestampSnowflake(DateTime.UtcNow) };
         var bot = new MockUser { ID = Snowflake.CreateTimestampSnowflake(DateTime.UtcNow + TimeSpan.FromSeconds(1)) };
@@ -34,42 +35,36 @@ public partial class UserCommandsTests
 
         IFeedbackService feedback = new MockFeedbackService(messageAuthor: user);
 
-        _userCommands = new UserCommands(interactionContext, feedback, keystore, TestFixture.Client, mockDiscordRestInteractionApi);
+        _userCommands = new UserCommands(interactionContext, feedback, _keystore, TestFixture.Client, mockDiscordRestInteractionApi);
     }
 
-    // Example only
-    // [TestMethod]
+    [TestMethod]
     [DataRow("userA", "test.ing@example.com")]
     public async Task RegisterUser(string name, string contactEmail)
     {
         Assert.IsNotNull(_userCommands);
-
+        Assert.IsNotNull(_keystore);
+        _keystore.ResetAllSettings();
+        
         var result = await _userCommands.RegisterUserAsync(name, contactEmail);
         Assert.IsTrue(result.IsSuccess, result.Error?.Message);
     }
 
-    // Example only
-    // [TestMethod]
-    [DataRow("/ipns/TODO")]
-    public async Task GetProfileWithoutRegistration(string userIpnsCid)
+    [TestMethod]
+    [DataRow("userB", "test.ing@example2.com")]
+    public async Task RegisterUserAndGetProfile(string name, string contactEmail)
     {
         Assert.IsNotNull(_userCommands);
-
-        var result = await _userCommands.GetProfileAsync(userIpnsCid);
-
-        Assert.IsFalse(result.IsSuccess);
-        Assert.IsInstanceOfType(result.Error, typeof(UserNotFoundError));
-    }
-
-    // Example only
-    // [TestMethod]
-    [DataRow("/ipns/TODO", "userA", "test.ing@example.com")]
-    public async Task RegisterUserAndGetProfile(string userIpnsCid, string name, string contactEmail)
-    {
-        Assert.IsNotNull(_userCommands);
+        Assert.IsNotNull(_keystore);
+        _keystore.ResetAllSettings();
+        
+        // Register user and retrieve created ipns key
         await RegisterUser(name, contactEmail);
 
-        var result = await _userCommands.GetProfileAsync(userIpnsCid);
+        var registeredUserMap = _keystore.ManagedUsers.FirstOrDefault(x => x.User.Name == name);
+        Assert.IsNotNull(registeredUserMap);
+
+        var result = await _userCommands.GetProfileAsync(registeredUserMap.IpnsCid);
 
         Assert.IsTrue(result.IsSuccess, result.Error?.Message);
 
