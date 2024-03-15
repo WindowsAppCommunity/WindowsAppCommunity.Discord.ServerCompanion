@@ -24,24 +24,20 @@ public partial class PublishersCommandGroup
 {
     [Group("edit")]
     [Description("Edit the details of a publisher.")]
-    public class EditPublisherCommandGroup : CommandGroup
+    public class EditPublisherCommandGroup(
+        IInteractionContext context,
+        IFeedbackService feedbackService,
+        PublisherKeystore publisherKeystore,
+        UserKeystore userKeystore,
+        IDiscordRestInteractionAPI interactionAPI,
+        IpfsClient client) : CommandGroup
     {
-        private readonly IFeedbackService _feedbackService;
-        private readonly IInteractionContext _context;
-        private readonly PublisherKeystore _publisherKeystore;
-        private readonly UserKeystore _userKeystore;
-        private readonly IDiscordRestInteractionAPI _interactionAPI;
-        private readonly IpfsClient _client;
-
-        public EditPublisherCommandGroup(IInteractionContext context, IFeedbackService feedbackService, PublisherKeystore publisherKeystore, UserKeystore userKeystore, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
-        {
-            _context = context;
-            _feedbackService = feedbackService;
-            _publisherKeystore = publisherKeystore;
-            _userKeystore = userKeystore;
-            _interactionAPI = interactionAPI;
-            _client = client;
-        }
+        private readonly IFeedbackService _feedbackService = feedbackService;
+        private readonly IInteractionContext _context = context;
+        private readonly PublisherKeystore _publisherKeystore = publisherKeystore;
+        private readonly UserKeystore _userKeystore = userKeystore;
+        private readonly IDiscordRestInteractionAPI _interactionAPI = interactionAPI;
+        private readonly IpfsClient _client = client;
 
         [Command("name")]
         [Description("Edit the name of a publisher")]

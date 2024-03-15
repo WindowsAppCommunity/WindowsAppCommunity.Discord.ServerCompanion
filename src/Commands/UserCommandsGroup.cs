@@ -108,7 +108,7 @@ public class UserCommands : CommandGroup
             _userKeystore.ManagedUsers.Add(new(user, key.Id));
             await _userKeystore.SaveAsync();
 
-            return (Result)await _feedbackService.SendContextualSuccessAsync($"User registration successful. Welcome to the community, <@{discordId}>!\nIpnsCid {key.Id}");
+            return await _feedbackService.SendContextualSuccessAsync($"User registration successful. Welcome to the community, <@{discordId}>!\nIpnsCid {key.Id}");
         }
         catch (Exception ex)
         {

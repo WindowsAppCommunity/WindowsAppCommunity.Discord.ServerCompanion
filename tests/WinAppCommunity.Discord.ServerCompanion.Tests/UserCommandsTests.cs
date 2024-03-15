@@ -58,9 +58,10 @@ public partial class UserCommandsTests
         Assert.IsNotNull(_keystore);
         _keystore.ResetAllSettings();
         
-        // Register user and retrieve created ipns key
+        // Register user
         await RegisterUser(name, contactEmail);
 
+        // Retrieve created ipns key
         var registeredUserMap = _keystore.ManagedUsers.FirstOrDefault(x => x.User.Name == name);
         Assert.IsNotNull(registeredUserMap);
 
