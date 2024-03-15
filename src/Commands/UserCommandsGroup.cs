@@ -73,19 +73,38 @@ public class UserCommands : CommandGroup
             if (!string.IsNullOrWhiteSpace(contactEmail))
                 connections.Add(new EmailConnection(contactEmail));
 
+            var embedBuilder = new EmbedBuilder()
+                .WithColour(Color.YellowGreen)
+                .WithTitle($"Registering user {name}")
+                .WithCurrentTimestamp();
+
+            var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
+            var followUpRes = await _interactionAPI.CreateFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, embeds: new(embeds));
+            var followUpMsg = followUpRes.GetEntityOrThrowError();
+
             // Create user
             var user = new User(name, connections.ToArray());
 
+
             // Get CID of new user object
+            embeds = embedBuilder.WithDescription("Get new user CID").Build().GetEntityOrThrowError().IntoList();
+            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             var cid = await _client.Dag.PutAsync(user);
 
+
             // Create ipns address
+            embeds = embedBuilder.WithDescription("Creating ipns address").Build().GetEntityOrThrowError().IntoList();
+            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             var key = await _client.Key.CreateKeyWithNameOfIdAsync();
 
             // Publish data to ipns
+            embeds = embedBuilder.WithDescription("Publishing data to ipns address").Build().GetEntityOrThrowError().IntoList();
+            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             await _client.Name.PublishAsync(cid, $"{key.Id}");
 
-            // Save new renamed
+            // Save new renamed user
+            embeds = embedBuilder.WithDescription("Finalizing").Build().GetEntityOrThrowError().IntoList();
+            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             _userKeystore.ManagedUsers.Add(new(user, key.Id));
             await _userKeystore.SaveAsync();
 
@@ -145,26 +164,11 @@ public class UserCommands : CommandGroup
             if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
                 embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
 
-            var emailConnection = managedUser.User.Connections.OfType<EmailConnection>().FirstOrDefault();
-            if (emailConnection is not null)
-            {
-                var embedWithFieldResult = embedBuilder.AddField("Contact email", emailConnection.Email, inline: true);
-                if (!embedWithFieldResult.IsSuccess)
-                {
-                    await _feedbackService.SendContextualErrorAsync($"An error occurred:\n\n{embedWithFieldResult.Error}");
-                    return embedWithFieldResult;
-                }
 
-                embedBuilder = embedWithFieldResult.Entity;
-            }
+            var userEmbed = user.ToEmbedBuilder(managedUser);
+            userEmbed.AddField("IPNS CID", cid.ToString(), inline: true);
 
-            var embedBuildResult = embedBuilder.Build();
-            if (!embedBuildResult.IsSuccess)
-                return embedBuildResult;
-
-            var returnMessage = $"\nUser name: {managedUser.User.Name}\nUser description: {managedUser.User.MarkdownAboutMe}\nUser CID: {managedUser.IpnsCid}\nUser contact email: {emailConnection}";
-
-            embeds = embedBuilder.WithDescription($"User profile retrieval successful\n{returnMessage}").Build().GetEntityOrThrowError().IntoList();
+            embeds = userEmbed.Build().GetEntityOrThrowError().IntoList();
             return (Result)await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
         }
         catch (Exception ex)
