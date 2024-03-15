@@ -165,7 +165,7 @@ public class UserCommands : CommandGroup
             var returnMessage = $"\nUser name: {managedUser.User.Name}\nUser description: {managedUser.User.MarkdownAboutMe}\nUser CID: {managedUser.IpnsCid}\nUser contact email: {emailConnection}";
 
             embeds = embedBuilder.WithDescription($"User profile retrieval successful\n{returnMessage}").Build().GetEntityOrThrowError().IntoList();
-            return (Result)await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+            return await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
         }
         catch (Exception ex)
         {
