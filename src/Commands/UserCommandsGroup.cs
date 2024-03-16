@@ -161,9 +161,6 @@ public class UserCommands : CommandGroup
 
             Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
 
-            if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
-                embedBuilder = embedBuilder.WithDescription(managedUser.User.MarkdownAboutMe);
-
 
             var userEmbed = user.ToEmbedBuilder(managedUser);
             userEmbed.AddField("IPNS CID", cid.ToString(), inline: true);

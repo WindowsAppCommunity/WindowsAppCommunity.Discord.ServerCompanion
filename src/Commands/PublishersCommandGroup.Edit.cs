@@ -24,20 +24,27 @@ public partial class PublishersCommandGroup
 {
     [Group("edit")]
     [Description("Edit the details of a publisher.")]
-    public class EditPublisherCommandGroup(
-        IInteractionContext context,
-        IFeedbackService feedbackService,
-        PublisherKeystore publisherKeystore,
-        UserKeystore userKeystore,
-        IDiscordRestInteractionAPI interactionAPI,
-        IpfsClient client) : CommandGroup
+    public class EditPublisherCommandGroup : CommandGroup
     {
-        private readonly IFeedbackService _feedbackService = feedbackService;
-        private readonly IInteractionContext _context = context;
-        private readonly PublisherKeystore _publisherKeystore = publisherKeystore;
-        private readonly UserKeystore _userKeystore = userKeystore;
-        private readonly IDiscordRestInteractionAPI _interactionAPI = interactionAPI;
-        private readonly IpfsClient _client = client;
+        private readonly IFeedbackService _feedbackService;
+        private readonly IInteractionContext _context;
+        private readonly PublisherKeystore _publisherKeystore;
+        private readonly UserKeystore _userKeystore;
+        private readonly IDiscordRestInteractionAPI _interactionAPI;
+        private readonly IpfsClient _client;
+
+        /// <summary>
+        /// Creates a new instance of<see cref="EditPublisherCommandGroup"/>.
+        /// </summary>
+        public EditPublisherCommandGroup(IInteractionContext context, IFeedbackService feedbackService, PublisherKeystore publisherKeystore, UserKeystore userKeystore, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
+        {
+            _feedbackService = feedbackService;
+            _context = context;
+            _publisherKeystore = publisherKeystore;
+            _userKeystore = userKeystore;
+            _interactionAPI = interactionAPI;
+            _client = client;
+        }
 
         private async Task<IResult> UpdatePublisherAsync(string ipnsCid, Action<Publisher> transform, string finalStatus)
         {

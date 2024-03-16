@@ -15,15 +15,16 @@ internal static class PublisherExtensions
     /// </summary>
     /// <param name="publisherKeystore">The keystore to search for the publisher in.</param>
     /// <param name="name">The name of the publisher to find.</param>
-    /// <returns>If found, a <see cref="ManagedPublisherMap"/> containing up to date Publisher data and the ipns keys used to retrieve it.</returns>
-    internal static async Task<(ManagedPublisherMap? PublisherMap, Cid? ResolvedPublisherCid)> GetPublisherByNameAsync(this PublisherKeystore publisherKeystore, string name, IpfsClient client)
+    /// <param name="cancellationToken">A token that can be used to cancel the ongoing task.</param>
+    /// <returns>If found, a <see cref="ManagedPublisherMap"/> containing up-to-date Publisher data and the ipns keys used to retrieve it.</returns>
+    internal static async Task<(ManagedPublisherMap? PublisherMap, Cid? ResolvedPublisherCid)> GetPublisherByNameAsync(this PublisherKeystore publisherKeystore, string name, IpfsClient client, CancellationToken cancellationToken)
     {
         var publisherMap = publisherKeystore.ManagedPublishers.FirstOrDefault(p => p.Publisher.Name == name);
         if (publisherMap is null)
             return (null, null);
 
-        var publisherRes = await IpfsExtensions.ResolveIpnsDagAsync<Publisher>(publisherMap.IpnsCid, client, default);
-        if (publisherRes.Result is null || publisherRes.ResultCid is null)
+        var publisherRes = await publisherMap.IpnsCid.ResolveIpnsDagAsync<Publisher>(client, cancellationToken);
+        if (publisherRes.Result is null)
             return (publisherMap, publisherRes.ResultCid);
 
         // Hydrate cached publisher data

@@ -40,6 +40,9 @@ internal static class UserExtensions
 
         builder.AddField("Name", user?.Name ?? string.Empty);
 
+        if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
+            builder.WithDescription(managedUser.User.MarkdownAboutMe);
+
         if (user.Links.Length > 0)
             builder.AddField("Links", string.Join("\n", user.Links.Select(x => $"[{x.Name}]({x.Url})")));
 
