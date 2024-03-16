@@ -166,7 +166,7 @@ public class UserCommands : CommandGroup
             userEmbed.AddField("IPNS CID", cid.ToString(), inline: true);
 
             embeds = userEmbed.Build().GetEntityOrThrowError().IntoList();
-            return (Result)await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
+            return await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
         }
         catch (Exception ex)
         {
