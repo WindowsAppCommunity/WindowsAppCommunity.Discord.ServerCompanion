@@ -1,7 +1,9 @@
 ﻿using Ipfs.Http;
+using OwlCore.Extensions;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Rest;
+using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
@@ -10,6 +12,7 @@ using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk.Models;
+using User = WinAppCommunity.Sdk.Models.User;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
@@ -84,11 +87,10 @@ public partial class UserCommandGroup
         {
             try
             {
-                // TODO
-                // Find existing user email
-                // If it exists, update it
-
-                return await ipnsCid.UpdateIpnsDataAsync<User>(user => user.Connections = [..user.Connections], finalStatus: $"User email updated to {contactEmail}", dataLabel: "User", _context, _interactionAPI, _client);
+                return await ipnsCid.UpdateIpnsDataAsync<User>((user) =>
+                {
+                    user.Connections = [.. user.Connections.Where(x => x is not EmailConnection), new EmailConnection(contactEmail)];
+                }, finalStatus: $"User email updated to {contactEmail}", dataLabel: "User", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -96,5 +98,7 @@ public partial class UserCommandGroup
                 return (Result)new UnhandledExceptionError(ex);
             }
         }
+
+
     }
 }
