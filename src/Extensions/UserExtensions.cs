@@ -1,8 +1,11 @@
-﻿using Remora.Discord.Extensions.Embeds;
+﻿using Ipfs.Http;
+using Ipfs;
+using Remora.Discord.Extensions.Embeds;
 using Remora.Rest.Core;
 using Remora.Results;
 using System.Drawing;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
+using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
 using ManagedUserMap = WinAppCommunity.Discord.ServerCompanion.Keystore.ManagedUserMap;
 
@@ -28,20 +31,43 @@ internal static class UserExtensions
             );
     }
 
-    internal static EmbedBuilder ToEmbedBuilder(this User user, ManagedUserMap managedUser)
+    /// <summary>
+    /// Resolves a user by name directly from the keystore.
+    /// </summary>
+    /// <param name="userKeystore">The keystore to search for the user in.</param>
+    /// <param name="userCid">The name of the user to find.</param>
+    /// <param name="client">The client to user for retrieving data.</param>
+    /// <param name="cancellationToken">A token that can be used to cancel the ongoing task.</param>
+    /// <returns>If found, a <see cref="ManagedUserMap"/> containing up-to-date User data and the ipns keys used to retrieve it.</returns>
+    internal static async Task<(ManagedUserMap? UserMap, Cid? ResolvedUserCid)> GetUserByIpnsCidAsync(this UserKeystore userKeystore, Cid userCid, IpfsClient client, CancellationToken cancellationToken)
     {
-        var builder = new EmbedBuilder()
-            .WithAuthor(user?.Name ?? string.Empty);
+        var userMap = userKeystore.ManagedUsers.FirstOrDefault(p => p.IpnsCid == userCid);
+        if (userMap is null)
+            return (null, null);
 
-        var emailConnection = managedUser.User.Connections.OfType<EmailConnection>().FirstOrDefault();
+        var userRes = await userMap.IpnsCid.ResolveIpnsDagAsync<User>(client, cancellationToken);
+        if (userRes.Result is null)
+            return (userMap, userRes.ResultCid);
 
+        // Hydrate cached user data
+        userMap.User = userRes.Result;
+
+        // Return user map data
+        return (userMap, userRes.ResultCid);
+    }
+
+    internal static EmbedBuilder ToEmbedBuilder(this User user)
+    {
+        var builder = new EmbedBuilder().WithAuthor(user.Name ?? string.Empty);
+
+        builder.AddField("Name", user.Name ?? string.Empty);
+
+        if (!string.IsNullOrWhiteSpace(user.MarkdownAboutMe))
+            builder.WithDescription(user.MarkdownAboutMe);
+
+        var emailConnection = user.Connections.OfType<EmailConnection>().FirstOrDefault();
         if (emailConnection is not null)
             builder.AddField("Email", emailConnection.Email, inline: true);
-
-        builder.AddField("Name", user?.Name ?? string.Empty);
-
-        if (!string.IsNullOrWhiteSpace(managedUser.User.MarkdownAboutMe))
-            builder.WithDescription(managedUser.User.MarkdownAboutMe);
 
         if (user.Links.Length > 0)
             builder.AddField("Links", string.Join("\n", user.Links.Select(x => $"[{x.Name}]({x.Url})")));
@@ -51,7 +77,6 @@ internal static class UserExtensions
 
         if (user.Publishers.Length > 0)
             builder.AddField("Subpublishers", string.Join("\n", user.Publishers.Select(x => x.ToString())));
-
 
         return builder;
     }

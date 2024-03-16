@@ -129,6 +129,7 @@ public class UserCommands : CommandGroup
                 .WithColour(Color.YellowGreen)
                 .WithTitle("Displays user profile")
                 .WithCurrentTimestamp();
+
             var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
             var followUpRes = await _interactionAPI.CreateFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, embeds: new(embeds));
             var followUpMsg = followUpRes.GetEntityOrThrowError();
@@ -136,33 +137,19 @@ public class UserCommands : CommandGroup
             var discordUser = _context.Interaction.Member.Value.User;
             var discordId = discordUser.Value.ID;
 
-            var managedUser = _userKeystore.ManagedUsers.FirstOrDefault(x => x.IpnsCid == cid);
-            if (managedUser is null)
-            {
-                var result = (Result)new UserNotFoundError();
-
-                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
-                return result;
-            }
-
-            embeds = embedBuilder.WithDescription("Resolving ipns D.A.G async").Build().GetEntityOrThrowError().IntoList();
+            embeds = embedBuilder.WithDescription("Resolving user data").Build().GetEntityOrThrowError().IntoList();
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-
-            var userRes = await managedUser.IpnsCid.ResolveIpnsDagAsync<User>(_client, CancellationToken.None);
-            if (userRes.Result is null)
+            
+            // Resolve user data and hydrate cache.
+            var userRes = await _userKeystore.GetUserByIpnsCidAsync(cid, _client, default);
+            if (userRes.UserMap is null)
             {
                 var result = (Result)new UserNotFoundError();
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
-
-            var user = userRes.Result;
-            managedUser.User = user;
-
-            Guard.IsNotNullOrWhiteSpace(managedUser.User.Name);
-
-
-            var userEmbed = user.ToEmbedBuilder(managedUser);
+            
+            var userEmbed = userRes.UserMap.User.ToEmbedBuilder();
             userEmbed.AddField("IPNS CID", cid.ToString(), inline: true);
 
             embeds = userEmbed.Build().GetEntityOrThrowError().IntoList();

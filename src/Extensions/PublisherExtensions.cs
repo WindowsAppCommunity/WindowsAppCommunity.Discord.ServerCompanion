@@ -15,6 +15,7 @@ internal static class PublisherExtensions
     /// </summary>
     /// <param name="publisherKeystore">The keystore to search for the publisher in.</param>
     /// <param name="name">The name of the publisher to find.</param>
+    /// <param name="client">The client to user for retrieving data.</param>
     /// <param name="cancellationToken">A token that can be used to cancel the ongoing task.</param>
     /// <returns>If found, a <see cref="ManagedPublisherMap"/> containing up-to-date Publisher data and the ipns keys used to retrieve it.</returns>
     internal static async Task<(ManagedPublisherMap? PublisherMap, Cid? ResolvedPublisherCid)> GetPublisherByNameAsync(this PublisherKeystore publisherKeystore, string name, IpfsClient client, CancellationToken cancellationToken)
