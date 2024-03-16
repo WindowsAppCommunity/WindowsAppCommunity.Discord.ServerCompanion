@@ -19,7 +19,6 @@ using WinAppCommunity.Sdk.Models;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
-
 /// <summary>
 /// Command group for interacting with publisher data.
 /// </summary>
