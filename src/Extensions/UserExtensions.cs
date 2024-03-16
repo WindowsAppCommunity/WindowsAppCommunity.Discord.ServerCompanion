@@ -56,9 +56,9 @@ internal static class UserExtensions
 
     internal static EmbedBuilder ToEmbedBuilder(this User user)
     {
-        var builder = new EmbedBuilder().WithAuthor(user.Name ?? string.Empty);
-
-        builder.AddField("Name", user.Name ?? string.Empty);
+        var builder = new EmbedBuilder()
+            .WithAuthor(user.Name)
+            .WithThumbnailUrl($"https://ipfs.io/ipfs/{user.Icon}?filename=image.png");
 
         if (!string.IsNullOrWhiteSpace(user.MarkdownAboutMe))
             builder.WithDescription(user.MarkdownAboutMe);
