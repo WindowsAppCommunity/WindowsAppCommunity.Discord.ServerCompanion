@@ -2,8 +2,6 @@
 using Ipfs;
 using Remora.Discord.Extensions.Embeds;
 using Remora.Rest.Core;
-using Remora.Results;
-using System.Drawing;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;

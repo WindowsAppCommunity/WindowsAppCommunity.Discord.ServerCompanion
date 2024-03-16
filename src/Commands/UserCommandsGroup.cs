@@ -85,25 +85,23 @@ public class UserCommands : CommandGroup
             // Create user
             var user = new User(name, connections.ToArray());
 
-
             // Get CID of new user object
-            embeds = embedBuilder.WithDescription("Get new user CID").Build().GetEntityOrThrowError().IntoList();
+            embeds = embedBuilder.WithDescription("Creating new user data").Build().GetEntityOrThrowError().IntoList();
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             var cid = await _client.Dag.PutAsync(user);
 
-
             // Create ipns address
-            embeds = embedBuilder.WithDescription("Creating ipns address").Build().GetEntityOrThrowError().IntoList();
+            embeds = embedBuilder.WithDescription("Creating new ipns keys for user").Build().GetEntityOrThrowError().IntoList();
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             var key = await _client.Key.CreateKeyWithNameOfIdAsync();
 
             // Publish data to ipns
-            embeds = embedBuilder.WithDescription("Publishing data to ipns address").Build().GetEntityOrThrowError().IntoList();
+            embeds = embedBuilder.WithDescription("Publishing user data to ipns").Build().GetEntityOrThrowError().IntoList();
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             await _client.Name.PublishAsync(cid, $"{key.Id}");
 
             // Save new renamed user
-            embeds = embedBuilder.WithDescription("Finalizing").Build().GetEntityOrThrowError().IntoList();
+            embeds = embedBuilder.WithDescription("Finalizing and saving user data").Build().GetEntityOrThrowError().IntoList();
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             _userKeystore.ManagedUsers.Add(new(user, key.Id));
             await _userKeystore.SaveAsync();
