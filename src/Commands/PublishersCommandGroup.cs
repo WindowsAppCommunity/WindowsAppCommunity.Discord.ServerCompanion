@@ -11,6 +11,7 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
+using System.Security.Cryptography;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -20,7 +21,7 @@ using WinAppCommunity.Sdk.Models;
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
 /// <summary>
-/// Command group for interacting with publisher data.
+/// Command group for interacting with publisher data. 
 /// </summary>
 [Group("publisher")]
 public partial class PublishersCommandGroup : CommandGroup
@@ -148,12 +149,11 @@ public partial class PublishersCommandGroup : CommandGroup
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             _publisherKeystore.ManagedPublishers.Add(new(publisher, key.Id));
             await _publisherKeystore.SaveAsync();
+            
+            var publisherEmbedBuilder = publisher.ToEmbedBuilder();
+            publisherEmbedBuilder.AddField("IPNS CID", key.Id, inline: true);
+            embeds = publisherEmbedBuilder.Build().GetEntityOrThrowError().IntoList();
 
-            // TODO: Create embed for displaying publisher data.
-            // temp: return simple message with publisher data
-            var returnMessage = $"Publisher registration successful.\nPublisher name: {publisher.Name}\nPublisher description: {publisher.Description}\nPublisher CID: {newPublisherCid}\nPublisher IPNS: {key.Id}\nPublisher icon: {publisher.Icon}\nPublisher accent color: {publisher.AccentColor}\nPublisher contact email: {publisher.ContactEmail?.Email}";
-
-            embeds = embedBuilder.WithDescription(returnMessage).WithColour(Color.Green).Build().GetEntityOrThrowError().IntoList();
             return (Result)await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
         }
         catch (Exception ex)
