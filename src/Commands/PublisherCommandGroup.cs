@@ -11,7 +11,6 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
-using System.Security.Cryptography;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -24,7 +23,7 @@ namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 /// Command group for interacting with publisher data. 
 /// </summary>
 [Group("publisher")]
-public partial class PublishersCommandGroup : CommandGroup
+public partial class PublisherCommandGroup : CommandGroup
 {
     private readonly IFeedbackService _feedbackService;
     private readonly IInteractionContext _context;
@@ -34,14 +33,14 @@ public partial class PublishersCommandGroup : CommandGroup
     private readonly IpfsClient _client;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PublishersCommandGroup"/> class.
+    /// Initializes a new instance of the <see cref="PublisherCommandGroup"/> class.
     /// </summary>
     /// <param name="feedbackService">The feedback service.</param>
     /// <param name="context">The context of the invoked interaction.</param>
     /// <param name="publisherKeystore">A keystore that stores all known publisher keys.</param>
     /// <param name="userKeystore">A keystore that stores all known user keys.</param>
     /// <param name="client">The client to use when interacting with IPFS.</param>
-    public PublishersCommandGroup(IInteractionContext context, IFeedbackService feedbackService, PublisherKeystore publisherKeystore, UserKeystore userKeystore, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
+    public PublisherCommandGroup(IInteractionContext context, IFeedbackService feedbackService, PublisherKeystore publisherKeystore, UserKeystore userKeystore, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
     {
         _context = context;
         _feedbackService = feedbackService;

@@ -3,15 +3,12 @@ using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
-using Remora.Results;
-using System.ComponentModel;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
 
-public partial class PublishersCommandGroup
+public partial class PublisherCommandGroup
 {
     [Group("subpublisher")]
     public class SubpublisherCommandGroup : CommandGroup

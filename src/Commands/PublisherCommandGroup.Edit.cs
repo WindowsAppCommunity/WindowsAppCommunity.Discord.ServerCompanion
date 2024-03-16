@@ -11,7 +11,6 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
-using System.Xml.Linq;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -20,7 +19,7 @@ using WinAppCommunity.Sdk.Models;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
-public partial class PublishersCommandGroup
+public partial class PublisherCommandGroup
 {
     [Group("edit")]
     [Description("Edit the details of a publisher.")]
