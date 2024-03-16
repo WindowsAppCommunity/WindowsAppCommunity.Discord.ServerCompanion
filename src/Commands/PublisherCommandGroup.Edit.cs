@@ -45,77 +45,13 @@ public partial class PublisherCommandGroup
             _client = client;
         }
 
-        private async Task<IResult> UpdatePublisherAsync(string ipnsCid, Action<Publisher> transform, string finalStatus)
-        {
-            Cid cid = ipnsCid;
-
-            var embedBuilder = new EmbedBuilder()
-                .WithColour(Color.YellowGreen)
-                .WithTitle("Updating publisher")
-                .WithCurrentTimestamp();
-
-            var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
-            var followUpRes = await _interactionAPI.CreateFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, embeds: new(embeds));
-            var followUpMsg = followUpRes.GetEntityOrThrowError();
-
-            // Resolve publisher data
-            embeds = embedBuilder.WithDescription("Resolving publisher data").Build().GetEntityOrThrowError().IntoList();
-            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-            var publisherRes = await cid.ResolveIpnsDagAsync<Publisher>(_client, CancellationToken.None);
-            var publisher = publisherRes.Result;
-
-            if (publisher is null)
-            {
-                var result = (Result)new PublisherNotFoundError();
-                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
-                return result;
-            }
-
-            embeds = embedBuilder.WithTitle($"Updating publisher {publisher.Name}").Build().GetEntityOrThrowError().IntoList();
-            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-
-            // Update data
-            transform(publisher);
-
-            embeds = embedBuilder.WithDescription("Saving publisher data").Build().GetEntityOrThrowError().IntoList();
-            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-            var res = await SaveRegisteredPublisherAsync(publisher, cid);
-                
-            embeds = embedBuilder.WithDescription(finalStatus).WithColour(Color.Green).Build().GetEntityOrThrowError().IntoList();
-            await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-
-            return res;
-        }
-
-        private async Task<IResult> SaveRegisteredPublisherAsync(Publisher publisher, Cid cid)
-        {
-            // Get keystore entry
-            var keystorePublisherMap = _publisherKeystore.ManagedPublishers.FirstOrDefault(x => x.IpnsCid == cid);
-            if (keystorePublisherMap is null)
-            {
-                var result = (Result)new PublisherNotFoundError();
-                await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>());
-                return result;
-            }
-
-            // Update keystore entry
-            keystorePublisherMap.Publisher = publisher;
-            await _publisherKeystore.SaveAsync();
-
-            // Publish to ipns
-            var newPublisherCid = await _client.Dag.PutAsync(publisher);
-            await _client.Name.PublishAsync(newPublisherCid, keystorePublisherMap.IpnsCid);
-
-            return Result.FromSuccess();
-        }
-
         [Command("name")]
         [Description("Edit the name of a publisher")]
         public async Task<IResult> EditNameAsync([Description("The cid of the publisher to edit.")] string ipnsCid, [Description("The new name for the publisher")] string name)
         {
             try
             {
-                return await UpdatePublisherAsync(ipnsCid, publisher => publisher.Name = name, $"Publisher name updated to {name}");
+                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.Name = name, $"Publisher name updated to {name}", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -129,7 +65,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await UpdatePublisherAsync(ipnsCid, publisher => publisher.Description = description, "Updated publisher description");
+                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.Description = description, "Updated publisher description", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -143,7 +79,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await UpdatePublisherAsync(ipnsCid, publisher => publisher.Icon = icon, $"Publisher icon updated");
+                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.Icon = icon, $"Publisher icon updated", _context, _interactionAPI, _client);;
             }
             catch (Exception ex)
             {
@@ -157,7 +93,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await UpdatePublisherAsync(ipnsCid, publisher => publisher.AccentColor = accentColor, $"Publisher icon updated");
+                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.AccentColor = accentColor, $"Publisher icon updated", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -171,7 +107,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await UpdatePublisherAsync(ipnsCid, publisher => publisher.ContactEmail = new EmailConnection(contactEmail), $"Publisher email updated to {contactEmail}");
+                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.ContactEmail = new EmailConnection(contactEmail), $"Publisher email updated to {contactEmail}", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {

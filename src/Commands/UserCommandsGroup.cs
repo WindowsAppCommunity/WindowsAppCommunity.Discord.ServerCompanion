@@ -21,7 +21,7 @@ using User = WinAppCommunity.Sdk.Models.User;
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
 [Group("user")]
-public class UserCommands : CommandGroup
+public partial class UserCommands : CommandGroup
 {
     private readonly IFeedbackService _feedbackService;
     private readonly IInteractionContext _context;
