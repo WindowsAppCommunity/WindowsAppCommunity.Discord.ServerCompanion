@@ -1,17 +1,16 @@
-﻿using System.Drawing;
-using CommunityToolkit.Diagnostics;
+﻿using CommunityToolkit.Diagnostics;
 using Ipfs;
 using Ipfs.Http;
 using OwlCore.Extensions;
-using Polly;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using System.Drawing;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
+using NotFoundError = WinAppCommunity.Discord.ServerCompanion.Commands.Errors.NotFoundError;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Extensions;
 
@@ -42,67 +41,49 @@ internal static class PublisherExtensions
         return (publisherMap, publisherRes.ResultCid);
     }
 
-    public static async Task<IResult> UpdatePublisherAsync(this PublisherKeystore publisherKeystore, string ipnsCid, Action<Publisher> transform, string finalStatus, IInteractionContext context, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
+    public static async Task<IResult> UpdateIpnsDataAsync<TTransformType>(this string ipnsCid, Action<TTransformType> transform, string finalStatus, string dataLabel, IInteractionContext context, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
+        where TTransformType : IName
     {
         Cid cid = ipnsCid;
 
         var embedBuilder = new EmbedBuilder()
             .WithColour(Color.YellowGreen)
-            .WithTitle("Updating publisher")
+            .WithTitle($"Updating {dataLabel}")
             .WithCurrentTimestamp();
 
         var embeds = embedBuilder.WithDescription("Loading").Build().GetEntityOrThrowError().IntoList();
         var followUpRes = await interactionAPI.CreateFollowupMessageAsync(context.Interaction.ApplicationID, context.Interaction.Token, embeds: new(embeds));
         var followUpMsg = followUpRes.GetEntityOrThrowError();
 
-        // Resolve publisher data
-        embeds = embedBuilder.WithDescription("Resolving publisher data").Build().GetEntityOrThrowError().IntoList();
+        // Resolve data
+        embeds = embedBuilder.WithDescription($"Resolving {dataLabel} data").Build().GetEntityOrThrowError().IntoList();
         await interactionAPI.EditFollowupMessageAsync(context.Interaction.ApplicationID, context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-        var publisherRes = await cid.ResolveIpnsDagAsync<Publisher>(client, CancellationToken.None);
-        var publisher = publisherRes.Result;
+        var dataRes = await cid.ResolveIpnsDagAsync<TTransformType>(client, CancellationToken.None);
+        var data = dataRes.Result;
 
-        if (publisher is null)
+        if (data is null)
         {
-            var result = (Result)new PublisherNotFoundError();
+            var result = (Result)new NotFoundError(dataLabel);
             embeds = embedBuilder.WithColour(Color.Red).WithTitle("An error occurred").WithDescription(result.Error?.Message ?? ThrowHelper.ThrowArgumentNullException<string>()).Build().GetEntityOrThrowError().IntoList();
             await interactionAPI.EditFollowupMessageAsync(context.Interaction.ApplicationID, context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
             return result;
         }
 
-        embeds = embedBuilder.WithTitle($"Updating publisher {publisher.Name}").Build().GetEntityOrThrowError().IntoList();
+        embeds = embedBuilder.WithTitle($"Updating {dataLabel} {data.Name}").Build().GetEntityOrThrowError().IntoList();
         await interactionAPI.EditFollowupMessageAsync(context.Interaction.ApplicationID, context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
 
         // Update data
-        transform(publisher);
+        transform(data);
 
         // Save data
-        embeds = embedBuilder.WithDescription("Saving publisher data").Build().GetEntityOrThrowError().IntoList();
+        embeds = embedBuilder.WithDescription($"Saving {dataLabel} data").Build().GetEntityOrThrowError().IntoList();
         await interactionAPI.EditFollowupMessageAsync(context.Interaction.ApplicationID, context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-        var res = await publisher.SaveRegisteredPublisherAsync(cid, client, publisherKeystore);
+        
+        var newCid = await client.Dag.PutAsync(data);
+        await client.Name.PublishAsync(newCid, cid);
 
         embeds = embedBuilder.WithDescription(finalStatus).WithColour(Color.Green).Build().GetEntityOrThrowError().IntoList();
         await interactionAPI.EditFollowupMessageAsync(context.Interaction.ApplicationID, context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-        return res;
-    }
-
-    public static async Task<IResult> SaveRegisteredPublisherAsync(this Publisher publisher, Cid cid, IpfsClient client, PublisherKeystore publisherKeystore)
-    {
-        // Get keystore entry
-        var keystorePublisherMap = publisherKeystore.ManagedPublishers.FirstOrDefault(x => x.IpnsCid == cid);
-        if (keystorePublisherMap is null)
-        {
-            var result = (Result)new PublisherNotFoundError();
-            return result;
-        }
-
-        // Update keystore entry
-        keystorePublisherMap.Publisher = publisher;
-        await publisherKeystore.SaveAsync();
-
-        // Publish to ipns
-        var newPublisherCid = await client.Dag.PutAsync(publisher);
-        await client.Name.PublishAsync(newPublisherCid, keystorePublisherMap.IpnsCid);
-
         return Result.FromSuccess();
     }
 

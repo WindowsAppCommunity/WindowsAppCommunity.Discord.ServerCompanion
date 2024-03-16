@@ -1,20 +1,14 @@
-﻿using CommunityToolkit.Diagnostics;
-using Ipfs;
-using Ipfs.Http;
-using OwlCore.Extensions;
+﻿using Ipfs.Http;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
-using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
-using System.Drawing;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Sdk;
 using WinAppCommunity.Sdk.Models;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
@@ -27,20 +21,16 @@ public partial class PublisherCommandGroup
     {
         private readonly IFeedbackService _feedbackService;
         private readonly IInteractionContext _context;
-        private readonly PublisherKeystore _publisherKeystore;
-        private readonly UserKeystore _userKeystore;
         private readonly IDiscordRestInteractionAPI _interactionAPI;
         private readonly IpfsClient _client;
 
         /// <summary>
         /// Creates a new instance of<see cref="EditPublisherCommandGroup"/>.
         /// </summary>
-        public EditPublisherCommandGroup(IInteractionContext context, IFeedbackService feedbackService, PublisherKeystore publisherKeystore, UserKeystore userKeystore, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
+        public EditPublisherCommandGroup(IInteractionContext context, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IpfsClient client)
         {
             _feedbackService = feedbackService;
             _context = context;
-            _publisherKeystore = publisherKeystore;
-            _userKeystore = userKeystore;
             _interactionAPI = interactionAPI;
             _client = client;
         }
@@ -51,7 +41,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.Name = name, $"Publisher name updated to {name}", _context, _interactionAPI, _client);
+                return await ipnsCid.UpdateIpnsDataAsync<Publisher>(publisher => publisher.Name = name, finalStatus: $"Publisher name updated to {name}", dataLabel: "Publisher", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -65,7 +55,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.Description = description, "Updated publisher description", _context, _interactionAPI, _client);
+                return await ipnsCid.UpdateIpnsDataAsync<Publisher>(publisher => publisher.Description = description, finalStatus: "Updated publisher description", dataLabel: "Publisher", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -79,7 +69,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.Icon = icon, $"Publisher icon updated", _context, _interactionAPI, _client);;
+                return await ipnsCid.UpdateIpnsDataAsync<Publisher>(publisher => publisher.Icon = icon, finalStatus: $"Publisher icon updated", dataLabel: "Publisher", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -93,7 +83,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.AccentColor = accentColor, $"Publisher icon updated", _context, _interactionAPI, _client);
+                return await ipnsCid.UpdateIpnsDataAsync<Publisher>(publisher => publisher.AccentColor = accentColor, finalStatus: $"Publisher accent color updated", dataLabel: "Publisher", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
@@ -107,7 +97,7 @@ public partial class PublisherCommandGroup
         {
             try
             {
-                return await _publisherKeystore.UpdatePublisherAsync(ipnsCid, publisher => publisher.ContactEmail = new EmailConnection(contactEmail), $"Publisher email updated to {contactEmail}", _context, _interactionAPI, _client);
+                return await ipnsCid.UpdateIpnsDataAsync<Publisher>(publisher => publisher.ContactEmail = new EmailConnection(contactEmail), finalStatus: $"Publisher email updated to {contactEmail}", dataLabel: "Publisher", _context, _interactionAPI, _client);
             }
             catch (Exception ex)
             {
