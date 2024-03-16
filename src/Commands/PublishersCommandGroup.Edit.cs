@@ -165,7 +165,7 @@ public partial class PublishersCommandGroup
         {
             try
             {
-                return await UpdatePublisherAsync(ipnsCid, publisher => publisher.ContactEmail = new EmailConnection(contactEmail), $"Publisher icon updated");
+                return await UpdatePublisherAsync(ipnsCid, publisher => publisher.ContactEmail = new EmailConnection(contactEmail), $"Publisher email updated to {contactEmail}");
             }
             catch (Exception ex)
             {
