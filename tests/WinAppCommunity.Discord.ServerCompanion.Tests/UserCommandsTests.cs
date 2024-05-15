@@ -1,4 +1,4 @@
-using OwlCore.Storage.SystemIO;
+using OwlCore.Storage.System.IO;
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Rest.Core;
@@ -10,16 +10,16 @@ using WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 namespace WinAppCommunity.Discord.ServerCompanion.Tests;
 
 [TestClass]
-public partial class UserCommandsTests
+public partial class UserCommandGroupTests
 {
-    private static UserCommands? _userCommands;
+    private static UserCommandGroup? _userCommands;
     private static UserKeystore? _keystore;
 
     [ClassInitialize]
     public static async Task Setup(TestContext context)
     {
         Assert.IsNotNull(context.DeploymentDirectory);
-        var workingFolder = await TestFixture.SafeCreateWorkingFolder(new SystemFolder(context.DeploymentDirectory), nameof(UserCommandsTests));
+        var workingFolder = await TestFixture.SafeCreateWorkingFolder(new SystemFolder(context.DeploymentDirectory), nameof(UserCommandGroupTests));
 
         _keystore = new UserKeystore(workingFolder);
         _keystore.ResetAllSettings();
@@ -33,7 +33,7 @@ public partial class UserCommandsTests
 
         IFeedbackService feedback = new MockFeedbackService(messageAuthor: user);
 
-        _userCommands = new UserCommands(interactionContext, feedback, _keystore, TestFixture.Client, mockDiscordRestInteractionApi);
+        _userCommands = new UserCommandGroup(interactionContext, feedback, _keystore, TestFixture.Client, mockDiscordRestInteractionApi);
     }
 
     [TestMethod]

@@ -7,7 +7,6 @@ using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
 using System.ComponentModel;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
-using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Sdk.Models;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;

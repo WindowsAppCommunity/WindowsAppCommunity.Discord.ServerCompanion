@@ -1,5 +1,6 @@
 ﻿using Ipfs.Http;
 using Ipfs;
+using OwlCore.Kubo;
 using Remora.Discord.Extensions.Embeds;
 using Remora.Rest.Core;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -43,7 +44,7 @@ internal static class UserExtensions
         if (userMap is null)
             return (null, null);
 
-        var userRes = await userMap.IpnsCid.ResolveIpnsDagAsync<User>(client, cancellationToken);
+        var userRes = await userMap.IpnsCid.ResolveDagCidAsync<User>(client, nocache: true, cancellationToken);
         if (userRes.Result is null)
             return (userMap, userRes.ResultCid);
 

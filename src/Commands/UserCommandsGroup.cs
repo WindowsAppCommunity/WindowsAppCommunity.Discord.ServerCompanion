@@ -11,6 +11,7 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
+using OwlCore.Kubo;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -21,7 +22,7 @@ using User = WinAppCommunity.Sdk.Models.User;
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
 [Group("user")]
-public partial class UserCommands : CommandGroup
+public partial class UserCommandGroup : CommandGroup
 {
     private readonly IFeedbackService _feedbackService;
     private readonly IInteractionContext _context;
@@ -30,13 +31,13 @@ public partial class UserCommands : CommandGroup
     private readonly IDiscordRestInteractionAPI _interactionAPI;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UserCommands"/> class.
+    /// Initializes a new instance of the <see cref="UserCommandGroup"/> class.
     /// </summary>
     /// <param name="feedbackService">The feedback service.</param>
     /// <param name="context">The context of the invoked interaction.</param>
     /// <param name="userKeystore">A keystore that stores all known user keys.</param>
     /// <param name="client">The client to use when interacting with IPFS.</param>
-    public UserCommands(IInteractionContext context, IFeedbackService feedbackService, UserKeystore userKeystore, IpfsClient client, IDiscordRestInteractionAPI interactionApi)
+    public UserCommandGroup(IInteractionContext context, IFeedbackService feedbackService, UserKeystore userKeystore, IpfsClient client, IDiscordRestInteractionAPI interactionApi)
     {
         _context = context;
         _feedbackService = feedbackService;

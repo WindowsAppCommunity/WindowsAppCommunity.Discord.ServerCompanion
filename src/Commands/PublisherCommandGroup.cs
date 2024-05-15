@@ -11,6 +11,7 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
+using OwlCore.Kubo;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
@@ -20,7 +21,7 @@ using WinAppCommunity.Sdk.Models;
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
 
 /// <summary>
-/// Command group for interacting with publisher data. 
+/// Command group for interacting with publisher data.
 /// </summary>
 [Group("publisher")]
 public partial class PublisherCommandGroup : CommandGroup
@@ -182,7 +183,7 @@ public partial class PublisherCommandGroup : CommandGroup
             // Resolve publisher data
             embeds = embedBuilder.WithDescription("Resolving publisher data").Build().GetEntityOrThrowError().IntoList();
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-            var publisherRes = await cid.ResolveIpnsDagAsync<Publisher>(_client, CancellationToken.None);
+            var publisherRes = await cid.ResolveDagCidAsync<Publisher>(_client, nocache: true, CancellationToken.None);
             var publisher = publisherRes.Result;
 
             if (publisher is null)
