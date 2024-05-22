@@ -11,12 +11,15 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
+using OwlCore.ComponentModel.Nomad;
 using OwlCore.Kubo;
 using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
 using WinAppCommunity.Discord.ServerCompanion.Extensions;
 using WinAppCommunity.Discord.ServerCompanion.Keystore;
 using WinAppCommunity.Sdk;
+using WinAppCommunity.Sdk.AppModels;
 using WinAppCommunity.Sdk.Models;
+using WinAppCommunity.Sdk.Nomad.Kubo;
 using User = WinAppCommunity.Sdk.Models.User;
 
 namespace WinAppCommunity.Discord.ServerCompanion.Commands;
@@ -62,16 +65,38 @@ public partial class UserCommandGroup : CommandGroup
                 return result;
             }
 
+            var ipnsKey = await _client.Key.CreateKeyWithNameOfIdAsync();
+            var newUserModel = new User();
+
+            // TODO: Share event stream handlers via ioc
+            // TODO: get ipnsLifetime from settings
+            var listeningEventStreamHandlers = new List<ISharedEventStreamHandler<Cid, KuboNomadEventStream, KuboNomadEventStreamEntry>>();
+            TimeSpan ipnsLifetime = TimeSpan.FromDays(1);
+            var sources = new List<KuboNomadEventStream>();
+            bool shouldPin = false;
+
+            var userAppModel = new ModifiableUserAppModel(listeningEventStreamHandlers)
+            {
+                Client = _client,
+                Id = ipnsKey.Id,
+                Inner = newUserModel,
+                IpnsLifetime = ipnsLifetime,
+                ShouldPin = shouldPin,
+                LocalEventStreamKeyName = ipnsKey.Name,
+                Sources = sources,
+            };
+
             // Setup connections
             // Discord connection is required for users to operate within Discord bot.
-            var connections = new List<ApplicationConnection>
-            {
-                new DiscordConnection(discordId.ToString()),
-            };
+            var discordConnection = new DiscordConnection(discordId.ToString());
+            await userAppModel.AddConnectionAsync(discordConnection, CancellationToken.None);
 
             // Add optional email
             if (!string.IsNullOrWhiteSpace(contactEmail))
-                connections.Add(new EmailConnection(contactEmail));
+            {
+                var emailConnection = new EmailConnection(contactEmail);
+                await userAppModel.AddConnectionAsync(emailConnection, CancellationToken.None);
+            }
 
             var embedBuilder = new EmbedBuilder()
                 .WithColour(Color.YellowGreen)
@@ -137,7 +162,7 @@ public partial class UserCommandGroup : CommandGroup
 
             embeds = embedBuilder.WithDescription("Resolving user data").Build().GetEntityOrThrowError().IntoList();
             await _interactionAPI.EditFollowupMessageAsync(_context.Interaction.ApplicationID, _context.Interaction.Token, followUpMsg.ID, embeds: new(embeds));
-            
+
             // Resolve user data and hydrate cache.
             var userRes = await _userKeystore.GetUserByIpnsCidAsync(cid, _client, default);
             if (userRes.UserMap is null)
@@ -146,7 +171,7 @@ public partial class UserCommandGroup : CommandGroup
                 await _feedbackService.SendContextualErrorAsync(result.Error?.Message ?? "User not found");
                 return result;
             }
-            
+
             var userEmbed = userRes.UserMap.User.ToEmbedBuilder();
             userEmbed.AddField("IPNS CID", cid.ToString(), inline: true);
 
