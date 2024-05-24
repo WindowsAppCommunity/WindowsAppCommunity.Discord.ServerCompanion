@@ -1,8 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CommunityToolkit.Diagnostics;
+using Ipfs;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OwlCore.Diagnostics;
 using OwlCore.Kubo;
+using OwlCore.Nomad;
+using OwlCore.Nomad.Extensions;
 using OwlCore.Storage.System.IO;
 using Remora.Commands.Extensions;
 using Remora.Discord.API.Abstractions.Gateway.Commands;
@@ -17,7 +21,9 @@ using WinAppCommunity.Discord.ServerCompanion;
 using WinAppCommunity.Discord.ServerCompanion.Autocomplete;
 using WinAppCommunity.Discord.ServerCompanion.Commands;
 using WinAppCommunity.Discord.ServerCompanion.Interactivity;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
+using WinAppCommunity.Sdk.AppModels;
+using WinAppCommunity.Sdk.Models;
+using WinAppCommunity.Sdk.Nomad.Kubo;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -67,15 +73,6 @@ var config = new ServerCompanionConfig(botToken, guildId);
 var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
 var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WinAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
 var kuboRepo = (SystemFolder)await serverCompanionData.CreateFolderAsync(".ipfs", overwrite: false, cancelTok);
-var keystoreData = (SystemFolder)await serverCompanionData.CreateFolderAsync("keystore", overwrite: false, cancelTok);
-
-var userKeystore = new UserKeystore(keystoreData);
-var projectKeystore = new ProjectKeystore(keystoreData);
-var publisherKeystore = new PublisherKeystore(keystoreData);
-
-await userKeystore.LoadAsync(cancelTok);
-await projectKeystore.LoadAsync(cancelTok);
-await publisherKeystore.LoadAsync(cancelTok);
 
 // Kubo setup (for ipfs access)
 var kubo = new KuboBootstrapper(kuboRepo.Path)
@@ -88,6 +85,62 @@ await kubo.StartAsync(cancelTok);
 var ipfsClient = kubo.Client;
 
 Logger.LogInformation("Kubo is running and ready to use");
+
+
+var kuboOptions = new KuboOptions
+{
+    ShouldPin = false,
+    IpnsLifetime = TimeSpan.FromDays(1),
+    UseCache = false,
+};
+
+// Get or create root community publisher event stream
+var communityKey = await ipfsClient.GetOrCreateKeyAsync("WinAppCommunity", x => new KuboNomadEventStream { Id = x.Id, Entries = [], Label = "Windows App Community" }, kuboOptions.IpnsLifetime, cancellationToken: cancelTok);
+
+// Get all other managed event streams
+var allKeys = await ipfsClient.Key.ListAsync(cancelTok);
+
+// Find all nomad event streams
+var sources = new List<KuboNomadEventStream>();
+foreach (var key in allKeys)
+{
+    try
+    {
+        var (result, resultCid) = await ipfsClient.ResolveDagCidAsync<KuboNomadEventStream>(key.Id, nocache: !kuboOptions.UseCache, cancellationToken: cancelTok);
+        if (result is not null)
+            sources.Add(result);
+    }
+    catch
+    {
+        // ignored, timeout or key value is not nomad event stream.
+    }
+}
+
+var listeningEventStreamHandlers = new List<ISharedEventStreamHandler<Cid, KuboNomadEventStream, KuboNomadEventStreamEntry>>();
+var communityPublisher = new ModifiablePublisherAppModel(listeningEventStreamHandlers)
+{
+    KuboOptions = kuboOptions,
+    Client = ipfsClient,
+    Id = communityKey.Id,
+    LocalEventStreamKeyName = communityKey.Name,
+    Sources = sources,
+};
+
+await foreach (var eventStreamEntry in communityPublisher.AdvanceSharedEventStreamAsync(ContentPointerToStreamEntryAsync, cancelTok))
+{
+    // Event handler id and event stream entry id should match.
+    Logger.LogInformation($"Event applied to handler {eventStreamEntry.Id}: {eventStreamEntry.TimestampUtc} {eventStreamEntry.Content}");
+    cancelTok.ThrowIfCancellationRequested();
+}
+
+Logger.LogInformation($"Root publisher {communityPublisher.Inner.Name} is ready");
+
+async Task<KuboNomadEventStreamEntry> ContentPointerToStreamEntryAsync(Cid cid, CancellationToken token)
+{
+    var (streamEntry, streamEntryCid) = await ipfsClient.ResolveDagCidAsync<KuboNomadEventStreamEntry>(cid, nocache: !communityPublisher.KuboOptions.UseCache, token);
+    Guard.IsNotNull(streamEntry);
+    return streamEntry;
+}
 
 // Service setup and init
 var services = new ServiceCollection()
