@@ -5,7 +5,7 @@ using Remora.Discord.API.Abstractions.Rest;
 using Remora.Rest.Core;
 using Remora.Results;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 
 public class MockDiscordRestInteractionAPI : IDiscordRestInteractionAPI
 {

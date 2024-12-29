@@ -2,7 +2,7 @@
 using Remora.Discord.Interactivity;
 using Remora.Results;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Interactivity
+namespace WindowsAppCommunity.Discord.ServerCompanion.Interactivity
 {
     public class MyInteractions : InteractionGroup
     {

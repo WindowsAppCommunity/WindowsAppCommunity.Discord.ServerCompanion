@@ -1,6 +1,6 @@
 ﻿using Remora.Results;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
 
 /// <summary>
 /// An error that occurs when a user is already registered.

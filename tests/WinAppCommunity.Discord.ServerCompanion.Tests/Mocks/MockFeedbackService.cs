@@ -8,7 +8,7 @@ using Remora.Rest.Core;
 using Remora.Results;
 using System.Drawing;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 
 public class MockFeedbackService : IFeedbackService
 {

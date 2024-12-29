@@ -8,7 +8,7 @@ using Remora.Discord.Commands.Autocomplete;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Autocomplete
+namespace WindowsAppCommunity.Discord.ServerCompanion.Autocomplete
 {
     /// <summary>
     /// Provides autocompletion against a dictionary of words.

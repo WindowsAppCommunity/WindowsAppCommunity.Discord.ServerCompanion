@@ -12,13 +12,13 @@ using Remora.Results;
 using System.ComponentModel;
 using System.Drawing;
 using OwlCore.Kubo;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
-using WinAppCommunity.Discord.ServerCompanion.Extensions;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Sdk;
-using WinAppCommunity.Sdk.Models;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using WindowsAppCommunity.Discord.ServerCompanion.Extensions;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Sdk;
+using WindowsAppCommunity.Sdk.Models;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Commands;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands;
 
 /// <summary>
 /// Command group for interacting with publisher data.

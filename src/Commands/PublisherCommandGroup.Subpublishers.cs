@@ -3,9 +3,9 @@ using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Commands;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands;
 
 
 public partial class PublisherCommandGroup

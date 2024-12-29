@@ -13,7 +13,7 @@ using Remora.Discord.Extensions.Embeds;
 using Remora.Discord.Interactivity;
 using Remora.Discord.Pagination.Extensions;
 using Remora.Results;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
 
 [Group("commands")]
 public class SampleCommandGroup : CommandGroup

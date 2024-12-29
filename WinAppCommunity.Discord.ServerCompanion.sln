@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34018.315
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinAppCommunity.Discord.ServerCompanion", "src\WinAppCommunity.Discord.ServerCompanion.csproj", "{85469CD7-CE61-4B16-833F-CF5CAE2E6852}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WindowsAppCommunity.Discord.ServerCompanion", "src\WindowsAppCommunity.Discord.ServerCompanion.csproj", "{85469CD7-CE61-4B16-833F-CF5CAE2E6852}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinAppCommunity.Sdk", "WinAppCommunity.Sdk\src\WinAppCommunity.Sdk.csproj", "{600964B5-29CF-4B18-A847-1333E28748ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WindowsAppCommunity.Sdk", "WindowsAppCommunity.Sdk\src\WindowsAppCommunity.Sdk.csproj", "{600964B5-29CF-4B18-A847-1333E28748ED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinAppCommunity.Discord.ServerCompanion.Tests", "tests\WinAppCommunity.Discord.ServerCompanion.Tests\WinAppCommunity.Discord.ServerCompanion.Tests.csproj", "{95042407-4784-48E5-865C-8F734BF4772F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsAppCommunity.Discord.ServerCompanion.Tests", "tests\WindowsAppCommunity.Discord.ServerCompanion.Tests\WindowsAppCommunity.Discord.ServerCompanion.Tests.csproj", "{95042407-4784-48E5-865C-8F734BF4772F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

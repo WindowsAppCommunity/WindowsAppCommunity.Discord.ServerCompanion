@@ -17,13 +17,13 @@ using Remora.Discord.Gateway.Extensions;
 using Remora.Discord.Gateway.Results;
 using Remora.Discord.Interactivity.Extensions;
 using Remora.Results;
-using WinAppCommunity.Discord.ServerCompanion;
-using WinAppCommunity.Discord.ServerCompanion.Autocomplete;
-using WinAppCommunity.Discord.ServerCompanion.Commands;
-using WinAppCommunity.Discord.ServerCompanion.Interactivity;
-using WinAppCommunity.Sdk.AppModels;
-using WinAppCommunity.Sdk.Models;
-using WinAppCommunity.Sdk.Nomad.Kubo;
+using WindowsAppCommunity.Discord.ServerCompanion;
+using WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands;
+using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
+using WindowsAppCommunity.Sdk.AppModels;
+using WindowsAppCommunity.Sdk.Models;
+using WindowsAppCommunity.Sdk.Nomad.Kubo;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -71,7 +71,7 @@ ArgumentNullException.ThrowIfNullOrEmpty(guildId);
 var config = new ServerCompanionConfig(botToken, guildId);
 
 var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
-var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WinAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
+var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WindowsAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
 var kuboRepo = (SystemFolder)await serverCompanionData.CreateFolderAsync(".ipfs", overwrite: false, cancelTok);
 
 // Kubo setup (for ipfs access)
@@ -95,7 +95,7 @@ var kuboOptions = new KuboOptions
 };
 
 // Get or create root community publisher event stream
-var communityKey = await ipfsClient.GetOrCreateKeyAsync("WinAppCommunity", x => new KuboNomadEventStream { Id = x.Id, Entries = [], Label = "Windows App Community" }, kuboOptions.IpnsLifetime, cancellationToken: cancelTok);
+var communityKey = await ipfsClient.GetOrCreateKeyAsync("WindowsAppCommunity", x => new KuboNomadEventStream { Id = x.Id, Entries = [], Label = "Windows App Community" }, kuboOptions.IpnsLifetime, cancellationToken: cancelTok);
 
 // Get all other managed event streams
 var allKeys = await ipfsClient.Key.ListAsync(cancelTok);

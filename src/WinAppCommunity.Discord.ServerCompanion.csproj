@@ -16,7 +16,7 @@
     <PackageReference Include="Remora.Discord" Version="2024.1.0" />
     <PackageReference Include="OwlCore.Extensions" Version="0.8.0" />
     <PackageReference Include="OwlCore.Storage" Version="0.11.1" />
-    <ProjectReference Include="..\WinAppCommunity.Sdk\src\WinAppCommunity.Sdk.csproj" />
+    <ProjectReference Include="..\WindowsAppCommunity.Sdk\src\WindowsAppCommunity.Sdk.csproj" />
     
     <Content Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -1,10 +1,10 @@
 ﻿using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Autocomplete;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Sdk.Models;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Sdk.Models;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Autocomplete;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
 
 /// <inheritdoc />
 public class UserAutoCompleteProvider(UserKeystore users) : IAutocompleteProvider

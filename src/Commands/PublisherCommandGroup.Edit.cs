@@ -6,10 +6,10 @@ using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
 using System.ComponentModel;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
-using WinAppCommunity.Sdk.Models;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using WindowsAppCommunity.Sdk.Models;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Commands;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands;
 
 public partial class PublisherCommandGroup
 {

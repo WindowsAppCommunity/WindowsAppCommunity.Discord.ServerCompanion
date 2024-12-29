@@ -3,10 +3,10 @@ using Ipfs.Http;
 using Remora.Discord.Extensions.Embeds;
 using System.Drawing;
 using OwlCore.Kubo;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Sdk.Models;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Sdk.Models;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Extensions;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Extensions;
 
 internal static class PublisherExtensions
 {

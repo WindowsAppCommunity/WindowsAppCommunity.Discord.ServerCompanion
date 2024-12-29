@@ -3,12 +3,12 @@ using Ipfs;
 using OwlCore.Kubo;
 using Remora.Discord.Extensions.Embeds;
 using Remora.Rest.Core;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Sdk;
-using WinAppCommunity.Sdk.Models;
-using ManagedUserMap = WinAppCommunity.Discord.ServerCompanion.Keystore.ManagedUserMap;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Sdk;
+using WindowsAppCommunity.Sdk.Models;
+using ManagedUserMap = WindowsAppCommunity.Discord.ServerCompanion.Keystore.ManagedUserMap;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Extensions;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Extensions;
 
 /// <summary>
 /// Extension methods for interacting with a <see cref="User"/>.

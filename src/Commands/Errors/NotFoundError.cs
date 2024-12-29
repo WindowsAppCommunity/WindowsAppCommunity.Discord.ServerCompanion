@@ -1,7 +1,7 @@
 ﻿using Remora.Results;
-using WinAppCommunity.Sdk.Models;
+using WindowsAppCommunity.Sdk.Models;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
 
 /// <summary>
 /// An error that occurs when a user can't be found.

@@ -2,7 +2,7 @@
 using Remora.Rest.Core;
 using System.Drawing;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 
 public class MockGuildMember : IGuildMember
 {

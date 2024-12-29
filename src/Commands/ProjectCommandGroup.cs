@@ -8,9 +8,9 @@ using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Discord.Interactivity;
 using Remora.Results;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
 
-namespace WinAppCommunity.Discord.ServerCompanion;
+namespace WindowsAppCommunity.Discord.ServerCompanion;
 
 [Group("commands")]
 public class ProjectCommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI) : CommandGroup

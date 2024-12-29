@@ -13,16 +13,16 @@ using System.ComponentModel;
 using System.Drawing;
 using OwlCore.ComponentModel.Nomad;
 using OwlCore.Kubo;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
-using WinAppCommunity.Discord.ServerCompanion.Extensions;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Sdk;
-using WinAppCommunity.Sdk.AppModels;
-using WinAppCommunity.Sdk.Models;
-using WinAppCommunity.Sdk.Nomad.Kubo;
-using User = WinAppCommunity.Sdk.Models.User;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using WindowsAppCommunity.Discord.ServerCompanion.Extensions;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Sdk;
+using WindowsAppCommunity.Sdk.AppModels;
+using WindowsAppCommunity.Sdk.Models;
+using WindowsAppCommunity.Sdk.Nomad.Kubo;
+using User = WindowsAppCommunity.Sdk.Models.User;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Commands;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands;
 
 [Group("user")]
 public partial class UserCommandGroup : CommandGroup

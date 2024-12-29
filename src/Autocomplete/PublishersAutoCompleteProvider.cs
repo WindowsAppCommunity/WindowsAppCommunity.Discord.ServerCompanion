@@ -1,9 +1,9 @@
 ﻿using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Autocomplete;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Autocomplete;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
 
 public class PublishersAutoCompleteProvider(PublisherKeystore publishers) : IAutocompleteProvider
 {

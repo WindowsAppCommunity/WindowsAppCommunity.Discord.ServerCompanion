@@ -4,7 +4,7 @@ using OwlCore.Storage;
 using OwlCore.Storage.System.IO;
 using System.Diagnostics;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Tests;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Tests;
 
 [TestClass]
 public class TestFixture()

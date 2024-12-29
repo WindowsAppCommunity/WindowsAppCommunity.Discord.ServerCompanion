@@ -7,12 +7,12 @@ using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
 using System.ComponentModel;
 using OwlCore.Kubo.Extensions;
-using WinAppCommunity.Discord.ServerCompanion.Commands.Errors;
-using WinAppCommunity.Discord.ServerCompanion.Extensions;
-using WinAppCommunity.Sdk.Models;
-using User = WinAppCommunity.Sdk.Models.User;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Errors;
+using WindowsAppCommunity.Discord.ServerCompanion.Extensions;
+using WindowsAppCommunity.Sdk.Models;
+using User = WindowsAppCommunity.Sdk.Models.User;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Commands;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands;
 
 public partial class UserCommandGroup
 {

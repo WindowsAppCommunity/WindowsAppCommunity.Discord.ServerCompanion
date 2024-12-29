@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WinAppCommunity.Discord.ServerCompanion.csproj" />
+    <ProjectReference Include="..\..\src\WindowsAppCommunity.Discord.ServerCompanion.csproj" />
   </ItemGroup>
 
 </Project>

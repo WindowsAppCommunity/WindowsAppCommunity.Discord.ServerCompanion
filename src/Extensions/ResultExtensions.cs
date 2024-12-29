@@ -1,6 +1,6 @@
 ﻿using Remora.Results;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Extensions
+namespace WindowsAppCommunity.Discord.ServerCompanion.Extensions
 {
     internal static class ResultExtensions
     {

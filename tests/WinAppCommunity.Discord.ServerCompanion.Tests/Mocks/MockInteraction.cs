@@ -2,7 +2,7 @@
 using Remora.Discord.API.Abstractions.Objects;
 using Remora.Rest.Core;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 
 public class MockInteraction : IInteraction
 {

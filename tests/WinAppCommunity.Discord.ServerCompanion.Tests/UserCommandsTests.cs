@@ -3,11 +3,11 @@ using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Rest.Core;
 using Remora.Results;
-using WinAppCommunity.Discord.ServerCompanion.Commands;
-using WinAppCommunity.Discord.ServerCompanion.Keystore;
-using WinAppCommunity.Discord.ServerCompanion.Tests.Mocks;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands;
+using WindowsAppCommunity.Discord.ServerCompanion.Keystore;
+using WindowsAppCommunity.Discord.ServerCompanion.Tests.Mocks;
 
-namespace WinAppCommunity.Discord.ServerCompanion.Tests;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Tests;
 
 [TestClass]
 public partial class UserCommandGroupTests
