@@ -64,4 +64,12 @@ public class MockMessage : IMessage
     public Optional<int> Position => throw new NotImplementedException();
 
     public Optional<IApplicationCommandInteractionDataResolved> Resolved => throw new NotImplementedException();
+
+    public Optional<IReadOnlyList<IMessageSnapshot>> MessageSnapshots => throw new NotImplementedException();
+
+    public Optional<IMessageInteractionMetadata> InteractionMetadata => throw new NotImplementedException();
+
+    public Optional<IPoll> Poll => throw new NotImplementedException();
+
+    public Optional<IMessageCall> Call => throw new NotImplementedException();
 }

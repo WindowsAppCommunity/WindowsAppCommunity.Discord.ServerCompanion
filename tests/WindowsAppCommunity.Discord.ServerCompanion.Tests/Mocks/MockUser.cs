@@ -29,6 +29,8 @@ public class MockGuildMember : IGuildMember
     public Optional<IDiscordPermissionSet> Permissions { get; set; }
 
     public Optional<DateTimeOffset?> CommunicationDisabledUntil { get; set; }
+
+    public Optional<IImageHash?> Banner { get; set; }
 }
 
 public class MockUser : IUser
@@ -64,4 +66,6 @@ public class MockUser : IUser
     public Optional<UserFlags> PublicFlags { get; set; }
 
     public Optional<IImageHash?> AvatarDecoration { get; set; }
+
+    public Optional<string?> GlobalName { get; set; }
 }
