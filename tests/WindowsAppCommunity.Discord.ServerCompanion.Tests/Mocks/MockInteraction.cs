@@ -37,4 +37,10 @@ public class MockInteraction : IInteraction
     public Optional<string> GuildLocale { get; set; }
 
     public IReadOnlyList<IEntitlement> Entitlements { get; set; } = new List<IEntitlement>();
+
+    public Optional<InteractionContextType> Context { get; set; }
+
+    public Optional<IReadOnlyDictionary<ApplicationIntegrationType, Snowflake>> AuthorizingIntegrationOwners { get; set; }
+
+    IDiscordPermissionSet IInteraction.AppPermissions => throw new NotImplementedException();
 }
