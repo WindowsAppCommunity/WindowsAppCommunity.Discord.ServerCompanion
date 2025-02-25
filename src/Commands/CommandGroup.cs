@@ -22,7 +22,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion;
 
 
 [Group("commands")]
-public class CommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI,IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
+public class CommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
 {
     [Command("sample-command")]
     [SuppressInteractionResponse(true)]
@@ -144,6 +144,34 @@ public class CommandGroup(IInteractionContext interactionContext, IFeedbackServi
             return Result.FromError(new NotFoundError($"Channel '{destinationChannelName}' not found."));
 
         var destinationChannelId = destinationChannel.ID;
+
+
+        if (!context.TryGetUserID(out var userId))
+            return Result.FromError(new InvalidOperationError("Could not determine the user ID."));
+
+        var botPermissionsResult = await guildApi.GetGuildMemberAsync(guildId, userId);
+        if (!botPermissionsResult.IsSuccess)
+            return Result.FromError(botPermissionsResult.Error);
+
+
+        var botPermissions = botPermissionsResult.Entity.Roles
+            .Select(roleId => guildApi.GetGuildRolesAsync(guildId, CancellationToken.None).Result.Entity.First(role => role.ID == roleId).Permissions);
+
+
+        DiscordPermission permissions = default;
+
+        foreach (var set in botPermissions)
+        {
+            if (set.HasPermission(DiscordPermission.SendMessages))
+            {
+                permissions = DiscordPermission.SendMessages;
+                break;
+            }
+        }
+
+        if (permissions == default)
+            return Result.FromError(new InvalidOperationError("Bot does not have permission to send messages in the destination channel."));
+
         var sourceChannelMention = $"<#{sourceChannelId}>";
         var destinationChannelMention = $"<#{destinationChannelId}>";
 
