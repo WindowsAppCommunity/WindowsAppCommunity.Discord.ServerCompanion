@@ -22,7 +22,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion;
 
 
 [Group("commands")]
-public class CommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
+public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
 {
     [Command("sample-command")]
     [SuppressInteractionResponse(true)]
@@ -145,18 +145,18 @@ public class CommandGroup(IInteractionContext interactionContext, IFeedbackServi
 
         var destinationChannelId = destinationChannel.ID;
 
+        if (sourceChannelId == destinationChannelId)
+            return Result.FromError(new InvalidOperationError("Source channel and destination channel cannot be the same."));
 
         if (!context.TryGetUserID(out var userId))
             return Result.FromError(new InvalidOperationError("Could not determine the user ID."));
 
-        var botPermissionsResult = await guildApi.GetGuildMemberAsync(guildId, userId);
-        if (!botPermissionsResult.IsSuccess)
-            return Result.FromError(botPermissionsResult.Error);
+        var userPermissionSet = await guildApi.GetGuildMemberAsync(guildId, userId);
+        if (!userPermissionSet.IsSuccess)
+            return Result.FromError(userPermissionSet.Error);
 
-
-        var botPermissions = botPermissionsResult.Entity.Roles
+        var botPermissions = userPermissionSet.Entity.Roles
             .Select(roleId => guildApi.GetGuildRolesAsync(guildId, CancellationToken.None).Result.Entity.First(role => role.ID == roleId).Permissions);
-
 
         DiscordPermission permissions = default;
 
