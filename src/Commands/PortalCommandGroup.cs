@@ -146,7 +146,7 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
         var destinationChannelId = destinationChannel.ID;
 
         if (sourceChannelId == destinationChannelId)
-            return Result.FromError(new InvalidOperationError("Source channel and destination channel cannot be the same."));
+            return Result.FromError(new InvalidOperationError("You're already in that channel!"));
 
         if (!context.TryGetUserID(out var userId))
             return Result.FromError(new InvalidOperationError("Could not determine the user ID."));
