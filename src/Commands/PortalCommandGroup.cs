@@ -81,7 +81,7 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
             }
 
             if (permissions == default)
-                return await feedbackService.SendContextualErrorAsync("You don't have permission to send messages in the destination channel.");
+                return await feedbackService.SendContextualErrorAsync("You aren't allowed to open a portal there.");
 
             var sourceChannelMention = $"<#{sourceChannelId}>";
             var destinationChannelMention = $"<#{destinationChannelId}>";
