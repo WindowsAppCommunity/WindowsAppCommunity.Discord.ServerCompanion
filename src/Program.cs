@@ -14,6 +14,7 @@ using Remora.Discord.Interactivity.Extensions;
 using Remora.Results;
 using WindowsAppCommunity.Discord.ServerCompanion;
 using WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands;
 using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
 
 // Cancellation setup
@@ -73,6 +74,7 @@ var services = new ServiceCollection()
     .AddInteractionGroup<MyInteractions>()
     .AddCommands()
         .AddCommandTree()
+            .WithCommandGroup<PortalCommandGroup>()
             .WithCommandGroup<SampleCommandGroup>()
             .Finish()
     .AddResponder<PingPongResponder>()
