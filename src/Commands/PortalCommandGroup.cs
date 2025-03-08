@@ -30,38 +30,38 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
         try
         {
             if (!context.TryGetChannelID(out var sourceChannelId))
-                return Result.FromError(new InvalidOperationError("Could not determine the source channel."));
+                return await feedbackService.SendContextualErrorAsync("Could not determine the source channel.");
 
             var sourceChannelResult = await channelApi.GetChannelAsync(sourceChannelId);
             if (!sourceChannelResult.IsSuccess)
-                return Result.FromError(sourceChannelResult.Error);
+                return await feedbackService.SendContextualErrorAsync(sourceChannelResult.Error.Message);
 
             if (sourceChannelResult.Entity.GuildID == default)
-                return Result.FromError(new NotFoundError("This command can only be used inside a server."));
+                return await feedbackService.SendContextualErrorAsync("This command can only be used inside a server.");
 
             var guildId = sourceChannelResult.Entity.GuildID.Value;
 
             var channelsResult = await guildApi.GetGuildChannelsAsync(guildId);
             if (!channelsResult.IsSuccess)
-                return Result.FromError(channelsResult.Error);
+                return await feedbackService.SendContextualErrorAsync(channelsResult.Error.Message);
 
             var destinationChannel = channelsResult.Entity
                 .FirstOrDefault(c => string.Equals(c.Name.Value, destinationChannelName, StringComparison.OrdinalIgnoreCase));
 
             if (destinationChannel == null)
-                return Result.FromError(new NotFoundError($"Channel '{destinationChannelName}' not found."));
+                return await feedbackService.SendContextualErrorAsync($"Channel '{destinationChannelName}' not found.");
 
             var destinationChannelId = destinationChannel.ID;
 
             if (sourceChannelId == destinationChannelId)
-                return Result.FromError(new InvalidOperationError("You're already in that channel!"));
+                return await feedbackService.SendContextualErrorAsync("You're already in that channel!");
 
             if (!context.TryGetUserID(out var userId))
-                return Result.FromError(new InvalidOperationError("Could not determine the user ID."));
+                return await feedbackService.SendContextualErrorAsync("Could not determine the user ID.");
 
             var userPermissionSet = await guildApi.GetGuildMemberAsync(guildId, userId);
             if (!userPermissionSet.IsSuccess)
-                return Result.FromError(userPermissionSet.Error);
+                return await feedbackService.SendContextualErrorAsync(userPermissionSet.Error.Message);
 
             var userpermissions = userPermissionSet.Entity.Roles
                 .Select(roleId => guildApi.GetGuildRolesAsync(guildId, CancellationToken.None).Result.Entity.First(role => role.ID == roleId).Permissions);
@@ -81,22 +81,19 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
             }
 
             if (permissions == default)
-                return Result.FromError(new InvalidOperationError("Bot does not have permission to send messages in the destination channel."));
+                return await feedbackService.SendContextualErrorAsync("You don't have permission to send messages in the destination channel.");
 
             var sourceChannelMention = $"<#{sourceChannelId}>";
             var destinationChannelMention = $"<#{destinationChannelId}>";
             var userIdMention = $"<@{userId}>";
 
-
-
             var sourceMessage = await channelApi.CreateMessageAsync(
                 sourceChannelId,
-                $"Portal creation initated to {destinationChannelMention}"
+                $"Portal creation initiated to {destinationChannelMention}"
             );
 
-
             if (!sourceMessage.IsSuccess)
-                return Result.FromError(sourceMessage.Error);
+                return await feedbackService.SendContextualErrorAsync(sourceMessage.Error.Message);
 
             var sourceMessageLink = $"https://discord.com/channels/{guildId}/{sourceChannelId}/{sourceMessage.Entity.ID}";
 
@@ -106,18 +103,16 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
                 embeds: new[] { new Embed(
                 Description: $"{userIdMention} opened the portal from {sourceChannelMention}!\n[Go back through the portal]({sourceMessageLink})",
                 Colour: new Optional<Color>(Color.Teal),
-                Thumbnail: new Optional<IEmbedThumbnail>(new EmbedThumbnail(Url: "https://cdn.discordapp.com/attachments/642818541426573344/960339465891631186/b.png")))
-                }
+                Thumbnail: new Optional<IEmbedThumbnail>(new EmbedThumbnail(Url: "https://cdn.discordapp.com/attachments/642818541426573344/960339465891631186/b.png")))}
             );
 
             var destinationMessageLink = $"https://discord.com/channels/{guildId}/{destinationChannelId}/{destinationMessage.Entity.ID}";
 
             var inPortalEmbed = new Embed(
                     Description: $"A portal to {destinationChannelMention} was opened!\n[Enter the portal]({destinationMessageLink})",
-                     Colour: new Optional<Color>(Color.Gold),
-                     Thumbnail: new Optional<IEmbedThumbnail>(new EmbedThumbnail(Url: "https://cdn.discordapp.com/attachments/642818541426573344/960339466185224212/o.png"))
-                 );
-
+                    Colour: new Optional<Color>(Color.Gold),
+                    Thumbnail: new Optional<IEmbedThumbnail>(new EmbedThumbnail(Url: "https://cdn.discordapp.com/attachments/642818541426573344/960339466185224212/o.png"))
+                );
 
             sourceMessage = await channelApi.EditMessageAsync(
                 sourceChannelId,
@@ -126,15 +121,14 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
                 embeds: new[] { inPortalEmbed }
             );
 
-
             if (!destinationMessage.IsSuccess)
-                return Result.FromError(destinationMessage.Error);
+                return await feedbackService.SendContextualErrorAsync(destinationMessage.Error.Message);
 
             return Result.FromSuccess();
         }
         catch (Exception ex)
         {
-            return Result.FromError(new ExceptionError(ex));
+            return await feedbackService.SendContextualErrorAsync(ex.Message);
         }
     }
 }
