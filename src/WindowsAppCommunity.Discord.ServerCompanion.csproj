@@ -11,8 +11,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.2" />
-    <PackageReference Include="OwlCore.Kubo" Version="0.20.1" />
-    <PackageReference Include="OwlCore.Nomad" Version="0.9.0" />
     <PackageReference Include="Remora.Discord" Version="2025.1.0" />
     <PackageReference Include="OwlCore.Extensions" Version="0.9.1" />
     <PackageReference Include="OwlCore.Storage" Version="0.12.1" />
