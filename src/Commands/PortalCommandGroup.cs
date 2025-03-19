@@ -8,9 +8,12 @@ using Remora.Discord.API.Abstractions.Objects;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Commands.Attributes;
+using Remora.Discord.Commands.Conditions;
 using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Commands.Feedback.Services;
+using Remora.Discord.Commands.Results;
+using Remora.Discord.Extensions.Services;
 using Remora.Discord.Interactivity;
 using Remora.Rest.Core;
 using Remora.Results;
@@ -131,4 +134,71 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
             return await feedbackService.SendContextualErrorAsync(ex.Message);
         }
     }
+
+
+    [Command("check-permissions")]
+    public async Task<IResult> CheckPermissionsAsync(string destinationChannelName)
+    {
+        try
+        {
+            if (!context.TryGetChannelID(out var sourceChannelId))
+                return await feedbackService.SendContextualErrorAsync("Could not determine the source channel.");
+
+            var sourceChannelResult = await channelApi.GetChannelAsync(sourceChannelId);
+            if (!sourceChannelResult.IsSuccess)
+                return await feedbackService.SendContextualErrorAsync(sourceChannelResult.Error.Message);
+
+            if (sourceChannelResult.Entity.GuildID == default)
+                return await feedbackService.SendContextualErrorAsync("This command can only be used inside a server.");
+
+            var guildId = sourceChannelResult.Entity.GuildID.Value;
+
+            var channelsResult = await guildApi.GetGuildChannelsAsync(guildId);
+            if (!channelsResult.IsSuccess)
+                return await feedbackService.SendContextualErrorAsync(channelsResult.Error.Message);
+
+            var destinationChannel = channelsResult.Entity
+                .FirstOrDefault(c => string.Equals(c.Name.Value, destinationChannelName, StringComparison.OrdinalIgnoreCase));
+
+            if (destinationChannel == null)
+                return await feedbackService.SendContextualErrorAsync($"Channel '{destinationChannelName}' not found.");
+
+            if (!context.TryGetUserID(out var userId))
+                return await feedbackService.SendContextualErrorAsync("Could not determine the user ID.");
+
+            var userPermissionSet = await guildApi.GetGuildMemberAsync(guildId, userId);
+            if (!userPermissionSet.IsSuccess)
+                return await feedbackService.SendContextualErrorAsync(userPermissionSet.Error.Message);
+
+            var userpermissions = userPermissionSet.Entity.Roles
+                .Select(roleId => guildApi.GetGuildRolesAsync(destinationChannel.GuildID.Value, CancellationToken.None).Result.Entity.First(role => role.ID == roleId).Permissions);
+
+            DiscordPermission permissions = default;
+
+            foreach (var set in userpermissions)
+            {
+                if (set.HasPermission(DiscordPermission.ViewChannel))
+                {
+                    if (set.HasPermission(DiscordPermission.SendMessages))
+                    {
+                        permissions = DiscordPermission.SendMessages;
+                        break;
+                    }
+                }
+            }
+
+            if (permissions == default)
+                return await feedbackService.SendContextualErrorAsync("You do not have permissions to access the destination channel.");
+
+            return await feedbackService.SendContextualSuccessAsync("You have the necessary permissions to access the destination channel.");
+        }
+        catch (Exception ex)
+        {
+            return await feedbackService.SendContextualErrorAsync(ex.Message);
+        }
+    }
+
+
+
+
 }
