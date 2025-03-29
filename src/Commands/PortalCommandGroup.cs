@@ -25,7 +25,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion;
 public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
 {
     [Command("portal")]
-    public async Task<IResult> PortalAsync(string destinationChannelName)
+    public async Task<IResult> PortalAsync(IChannel destChannel)
     {
         try
         {
@@ -41,47 +41,13 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
 
             var guildId = sourceChannelResult.Entity.GuildID.Value;
 
-            var channelsResult = await guildApi.GetGuildChannelsAsync(guildId);
-            if (!channelsResult.IsSuccess)
-                return await feedbackService.SendContextualErrorAsync(channelsResult.Error.Message);
-
-            var destinationChannel = channelsResult.Entity
-                .FirstOrDefault(c => string.Equals(c.Name.Value, destinationChannelName, StringComparison.OrdinalIgnoreCase));
-
-            if (destinationChannel == null)
-                return await feedbackService.SendContextualErrorAsync($"Channel '{destinationChannelName}' not found.");
-
-            var destinationChannelId = destinationChannel.ID;
+            var destinationChannelId = destChannel.ID;
 
             if (sourceChannelId == destinationChannelId)
                 return await feedbackService.SendContextualErrorAsync("You're already in that channel!");
 
             if (!context.TryGetUserID(out var userId))
                 return await feedbackService.SendContextualErrorAsync("Could not determine the user ID.");
-
-            var userPermissionSet = await guildApi.GetGuildMemberAsync(guildId, userId);
-            if (!userPermissionSet.IsSuccess)
-                return await feedbackService.SendContextualErrorAsync(userPermissionSet.Error.Message);
-
-            var userpermissions = userPermissionSet.Entity.Roles
-                .Select(roleId => guildApi.GetGuildRolesAsync(guildId, CancellationToken.None).Result.Entity.First(role => role.ID == roleId).Permissions);
-
-            DiscordPermission permissions = default;
-
-            foreach (var set in userpermissions)
-            {
-                if (set.HasPermission(DiscordPermission.ViewChannel))
-                {
-                    if (set.HasPermission(DiscordPermission.SendMessages))
-                    {
-                        permissions = DiscordPermission.SendMessages;
-                        break;
-                    }
-                }
-            }
-
-            if (permissions == default)
-                return await feedbackService.SendContextualErrorAsync("You aren't allowed to open a portal there.");
 
             var sourceChannelMention = $"<#{sourceChannelId}>";
             var destinationChannelMention = $"<#{destinationChannelId}>";
@@ -124,7 +90,7 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
             if (!destinationMessage.IsSuccess)
                 return await feedbackService.SendContextualErrorAsync(destinationMessage.Error.Message);
 
-            return Result.FromSuccess();
+            return await feedbackService.SendContextualSuccessAsync("portal creation successful");
         }
         catch (Exception ex)
         {
