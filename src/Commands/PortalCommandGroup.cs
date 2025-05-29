@@ -19,9 +19,6 @@ using NotFoundError = WindowsAppCommunity.Discord.ServerCompanion.Commands.Error
 
 namespace WindowsAppCommunity.Discord.ServerCompanion;
 
-
-
-[Group("commands")]
 public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
 {
     [Command("portal")]
