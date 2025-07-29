@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Threading;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OwlCore.Diagnostics;
+using OwlCore.Kubo;
+using OwlCore.Nomad.Kubo;
 using OwlCore.Storage.System.IO;
 using Remora.Commands.Extensions;
 using Remora.Discord.API.Abstractions.Gateway.Commands;
@@ -15,7 +18,12 @@ using Remora.Results;
 using WindowsAppCommunity.Discord.ServerCompanion;
 using WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.User;
 using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
+using WindowsAppCommunity.Sdk.Nomad;
+using Org.BouncyCastle.Ocsp;
+using OwlCore.Storage;
+using WindowsAppCommunity.Discord.ServerCompanion.Services;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -65,22 +73,66 @@ var config = new ServerCompanionConfig(botToken, guildId);
 var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
 var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WindowsAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
 
-// Service setup and init
+// Cancellation
+var cancellationTokenSource = new CancellationTokenSource();
+var cancellationToken = cancellationTokenSource.Token;
+Console.CancelKeyPress += (sender, eventArgs) =>
+{
+    eventArgs.Cancel = true;
+    cancellationTokenSource.Cancel();
+};
+
+// Storage setup
+var userProfileFolder = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+var wacsdkRepoFolder = (SystemFolder)await userProfileFolder.CreateFolderAsync(".wacsdk", overwrite: false, cancellationToken);
+
+// Dedicated ipfs repo for testing in.
+var kuboRepoFolder = (SystemFolder)await wacsdkRepoFolder.CreateFolderAsync(".ipfs", overwrite: false, cancellationToken);
+
+// Bootstrap and start Kubo
+var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
+{
+    GatewayUri = new Uri("http://127.0.0.1:8025"),
+    ApiUri = new Uri("http://127.0.0.1:5025"),
+    GatewayUriMode = ConfigMode.OverwriteExisting,
+    ApiUriMode = ConfigMode.OverwriteExisting,
+    LaunchConflictMode = BootstrapLaunchConflictMode.Attach,
+    RoutingMode = DhtRoutingMode.None,
+};
+await kubo.StartAsync(cancellationToken);
+
+// Command data / config
+var commandConfig = new WacsdkCommandConfig
+{
+    CancellationToken = cancellationToken,
+    KuboOptions = new KuboOptions
+    {
+        IpnsLifetime = TimeSpan.FromDays(1),
+        ShouldPin = false,
+        UseCache = false,
+    },
+    Client = kubo.Client,
+    RepositoryStorage = wacsdkRepoFolder,
+};
+
+// Service setup and init  
 var services = new ServiceCollection()
-    .AddSingleton(config)
-    .AddDiscordGateway(_ => botToken)
-    .AddDiscordCommands(enableSlash: true)
-    .AddInteractivity()
-    .AddInteractionGroup<MyInteractions>()
-    .AddCommands()
-        .AddCommandTree()
-            .WithCommandGroup<PortalCommandGroup>()
-            .WithCommandGroup<SampleCommandGroup>()
-            .Finish()
-    .AddResponder<PingPongResponder>()
-    .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
-    .AddAutocompleteProvider<SampleAutoCompleteProvider>()
-    .BuildServiceProvider();
+  .AddSingleton(config)
+  .AddDiscordGateway(_ => botToken)
+  .AddDiscordCommands(enableSlash: true)
+  .AddInteractivity()
+  .AddInteractionGroup<MyInteractions>()
+  .AddCommands()
+      .AddCommandTree()
+          .WithCommandGroup<PortalCommandGroup>()
+          .WithCommandGroup<SampleCommandGroup>()
+          .WithCommandGroup<UserCommandGroup>()
+          .Finish()
+  .AddResponder<PingPongResponder>()
+  .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
+  .AddAutocompleteProvider<SampleAutoCompleteProvider>()
+  .AddSingleton<INomadRepoService>(provider => new NomadRepoService(commandConfig)) // Pass WacsdkCommandConfig to INomadRepoService  
+  .BuildServiceProvider();
 
 var log = services.GetRequiredService<ILogger<Program>>();
 var gatewayClient = services.GetRequiredService<DiscordGatewayClient>();
