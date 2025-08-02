@@ -13,6 +13,7 @@ using OwlCore.Storage;
 using Remora.Commands.Attributes;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.Commands.Contexts;
+using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
 using WindowsAppCommunity.Discord.ServerCompanion.Services;
@@ -26,8 +27,12 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
         [Command("createUser")]
         public async Task<IResult> CreateUser(string name, string description)
         {
-            var knownId = Guid.NewGuid().ToString();
-            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepo(string.Empty, knownId);
+            if (!context.TryGetUserID(out var userId))
+                return await feedbackService.SendContextualErrorAsync("Could not determine the user ID.");
+
+            var knownId = userId.Value.ToString();
+            var repoId = knownId;
+            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepo(repoId, knownId);
 
             var createdUser = await repositoryContainer.UserRepository.CreateAsync(new(KnownId: knownId), Config.CancellationToken);
 
@@ -116,5 +121,20 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
             return await feedbackService.SendContextualSuccessAsync($"User {user.Id}, Username {user.Name}, User Description {user.Description}");
         }
 
+        [Command("listUser")]
+        public async Task<IResult> ListUser(string repoId)
+        {
+            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepo(string.Empty, string.Empty);
+            var response = new StringBuilder($"Listing users for repository {repoId}\n");
+            Logger.LogInformation($"Listing users for repository {repoId}");
+            await foreach (var user in repositoryContainer.UserRepository.GetAsync(Config.CancellationToken))
+            {
+                response.Append($"{nameof(user.Id)}: {user.Id}\n");
+                response.Append($"{nameof(user.Name)}: {user.Name}\n");
+            }
+            response.Append($"Finished listing users for repository {repoId}");
+
+            return await feedbackService.SendContextualSuccessAsync(response.ToString());
+        }
     }
 }
