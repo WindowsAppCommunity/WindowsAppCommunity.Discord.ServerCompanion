@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using OwlCore.Diagnostics;
 using OwlCore.Storage;
@@ -18,8 +19,13 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Services
             Config = config;
         }
 
-        public async Task<(RepositoryContainer, WacsdkCommandConfig, WacsdkNomadSettings)> GetNomadRepo(string repoId, string knownId)
+        public async Task<(RepositoryContainer, WacsdkCommandConfig, WacsdkNomadSettings)> GetNomadRepoAsync(string repoId, string knownId, CancellationToken token)
         {
+            if (token.IsCancellationRequested)
+            {
+                throw new TaskCanceledException();
+            }
+
             var thisRepoStorage = (IModifiableFolder)await Config.RepositoryStorage.CreateFolderAsync(repoId, overwrite: false);
 
             Logger.LogInformation($"Getting repo store with ID {repoId} at {thisRepoStorage.GetType().Name} {thisRepoStorage.Id}");
