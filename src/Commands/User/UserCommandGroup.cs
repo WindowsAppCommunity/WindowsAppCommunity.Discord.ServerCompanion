@@ -33,7 +33,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
 
             var knownId = userId.Value.ToString();
             var repoId = knownId;
-            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepoAsync(repoId, knownId,CancellationToken.None);
+            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepoAsync(repoId, knownId, CancellationToken.None);
 
             var createdUser = await repositoryContainer.UserRepository.CreateAsync(new(KnownId: knownId), Config.CancellationToken);
 
@@ -60,7 +60,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
         [Command("getUser")]
         public async Task<IResult> GetUser(string userId)
         {
-            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepoAsync(userId, userId,CancellationToken.None);
+            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepoAsync(userId, userId, CancellationToken.None);
 
             Logger.LogInformation($"Getting user {userId}");
             var user = await repositoryContainer.UserRepository.GetAsync(userId, Config.CancellationToken);
