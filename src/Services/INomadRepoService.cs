@@ -5,6 +5,12 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Services
     public interface INomadRepoService
     {
         public Task<(RepositoryContainer, WacsdkCommandConfig, WacsdkNomadSettings)> GetNomadRepoAsync(string repoId, string knownId, CancellationToken token);
+        Task<string> CreateRepoAsync(string repoId, CancellationToken token);
+
+        Task<List<string>> ListRepoAsync(CancellationToken token);
+
+        Task<bool> DeleteRepoAsync(string repoId,CancellationToken token);
+
         public WacsdkCommandConfig Config { get; }
 
     }

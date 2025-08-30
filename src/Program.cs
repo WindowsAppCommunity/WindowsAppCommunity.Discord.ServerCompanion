@@ -25,6 +25,7 @@ using Org.BouncyCastle.Ocsp;
 using OwlCore.Storage;
 using WindowsAppCommunity.Discord.ServerCompanion.Services;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands.Project;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Repo;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -129,6 +130,7 @@ var services = new ServiceCollection()
           .WithCommandGroup<SampleCommandGroup>()
           .WithCommandGroup<UserCommandGroup>()
           .WithCommandGroup<ProjectCommandGroup>()
+          .WithCommandGroup<RepoCommandGroup>()
           .Finish()
   .AddResponder<PingPongResponder>()
   .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
