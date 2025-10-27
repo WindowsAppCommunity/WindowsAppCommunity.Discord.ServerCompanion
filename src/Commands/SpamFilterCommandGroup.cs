@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Remora.Commands.Attributes;
 using Remora.Commands.Groups;
 using Remora.Discord.API.Abstractions.Objects;
@@ -30,6 +31,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
     // Crosspost TTL Configuration
     [Group("crosspost-ttl")]
+    [Description("Configure time window for duplicate message tracking")]
     public class TtlGroup : CommandGroup
     {
         private readonly RateLimitSettings _settings;
@@ -43,6 +45,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("get")]
         [CommandType(ApplicationCommandType.ChatInput)]
+        [Description("Get current duplicate tracking time window")]
         public async Task<IResult> GetAsync()
         {
             return await _feedbackService.SendContextualSuccessAsync(
@@ -51,7 +54,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("set")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> SetAsync(int minutes)
+        [Description("Set duplicate tracking time window")]
+        public async Task<IResult> SetAsync([Description("Time window in minutes")] int minutes)
         {
             if (minutes < 1)
                 return await _feedbackService.SendContextualErrorAsync("TTL must be at least 1 minute.");
@@ -65,6 +69,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
     // Crosspost Threshold Configuration
     [Group("crosspost-threshold")]
+    [Description("Configure how many duplicate messages trigger action")]
     public class ThresholdGroup : CommandGroup
     {
         private readonly RateLimitSettings _settings;
@@ -78,6 +83,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("get")]
         [CommandType(ApplicationCommandType.ChatInput)]
+        [Description("Get current duplicate message threshold")]
         public async Task<IResult> GetAsync()
         {
             return await _feedbackService.SendContextualSuccessAsync(
@@ -86,7 +92,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("set")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> SetAsync(int count)
+        [Description("Set duplicate message threshold")]
+        public async Task<IResult> SetAsync([Description("Number of duplicates that trigger action")] int count)
         {
             if (count < 1)
                 return await _feedbackService.SendContextualErrorAsync("Threshold must be at least 1 message.");
@@ -100,6 +107,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
     // Crosspost Mute Duration Configuration
     [Group("crosspost-mute-duration")]
+    [Description("Configure timeout duration for spam violations")]
     public class MuteDurationGroup : CommandGroup
     {
         private readonly RateLimitSettings _settings;
@@ -113,6 +121,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("get")]
         [CommandType(ApplicationCommandType.ChatInput)]
+        [Description("Get current mute duration for spam violations")]
         public async Task<IResult> GetAsync()
         {
             return await _feedbackService.SendContextualSuccessAsync(
@@ -121,7 +130,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("set")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> SetAsync(int minutes)
+        [Description("Set mute duration for spam violations")]
+        public async Task<IResult> SetAsync([Description("Duration in minutes")] int minutes)
         {
             if (minutes < 1)
                 return await _feedbackService.SendContextualErrorAsync("Mute duration must be at least 1 minute.");
@@ -135,6 +145,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
     // Crosspost Notification Management
     [Group("crosspost-notifications")]
+    [Description("Manage channels that receive spam violation alerts")]
     public class NotificationsGroup : CommandGroup
     {
         private readonly RateLimitSettings _settings;
@@ -148,6 +159,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("list")]
         [CommandType(ApplicationCommandType.ChatInput)]
+        [Description("List channels that receive spam violation alerts")]
         public async Task<IResult> ListAsync()
         {
             var channels = _settings.NotificationChannelIds;
@@ -164,7 +176,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("add")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> AddAsync(IChannel channel)
+        [Description("Add a channel to receive spam violation alerts")]
+        public async Task<IResult> AddAsync([Description("Channel to add")] IChannel channel)
         {
             var channels = _settings.NotificationChannelIds;
             if (channels.Contains(channel.ID.Value))
@@ -178,7 +191,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("remove")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> RemoveAsync(IChannel channel)
+        [Description("Remove a channel from spam violation alerts")]
+        public async Task<IResult> RemoveAsync([Description("Channel to remove")] IChannel channel)
         {
             var channels = _settings.NotificationChannelIds;
             if (!channels.Contains(channel.ID.Value))
@@ -193,6 +207,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
     // Crosspost Exemption Management - Channels
     [Group("crosspost-exempt-channels")]
+    [Description("Manage channels where spam detection is disabled")]
     public class ExemptChannelsGroup : CommandGroup
     {
         private readonly RateLimitSettings _settings;
@@ -206,6 +221,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("list")]
         [CommandType(ApplicationCommandType.ChatInput)]
+        [Description("List channels where spam detection is disabled")]
         public async Task<IResult> ListAsync()
         {
             var channels = _settings.ExemptChannelIds;
@@ -222,7 +238,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("add")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> AddAsync(IChannel channel)
+        [Description("Disable spam detection in a channel")]
+        public async Task<IResult> AddAsync([Description("Channel to exempt")] IChannel channel)
         {
             var channels = _settings.ExemptChannelIds;
             if (channels.Contains(channel.ID.Value))
@@ -236,7 +253,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("remove")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> RemoveAsync(IChannel channel)
+        [Description("Re-enable spam detection in a channel")]
+        public async Task<IResult> RemoveAsync([Description("Channel to un-exempt")] IChannel channel)
         {
             var channels = _settings.ExemptChannelIds;
             if (!channels.Contains(channel.ID.Value))
@@ -251,6 +269,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
     // Crosspost Exemption Management - Roles
     [Group("crosspost-exempt-roles")]
+    [Description("Manage roles that can crosspost without spam detection")]
     public class ExemptRolesGroup : CommandGroup
     {
         private readonly RateLimitSettings _settings;
@@ -264,6 +283,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("list")]
         [CommandType(ApplicationCommandType.ChatInput)]
+        [Description("List roles that can crosspost without spam detection")]
         public async Task<IResult> ListAsync()
         {
             var roles = _settings.ExemptRoleIds;
@@ -280,7 +300,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("add")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> AddAsync(IRole role)
+        [Description("Allow a role to crosspost without spam detection")]
+        public async Task<IResult> AddAsync([Description("Role to exempt")] IRole role)
         {
             var roles = _settings.ExemptRoleIds;
             if (roles.Contains(role.ID.Value))
@@ -294,7 +315,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("remove")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> RemoveAsync(IRole role)
+        [Description("Remove crosspost exemption from a role")]
+        public async Task<IResult> RemoveAsync([Description("Role to un-exempt")] IRole role)
         {
             var roles = _settings.ExemptRoleIds;
             if (!roles.Contains(role.ID.Value))
@@ -309,6 +331,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
     // Crosspost Exemption Management - Users
     [Group("crosspost-exempt-users")]
+    [Description("Manage users that can crosspost without spam detection")]
     public class ExemptUsersGroup : CommandGroup
     {
         private readonly RateLimitSettings _settings;
@@ -322,6 +345,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("list")]
         [CommandType(ApplicationCommandType.ChatInput)]
+        [Description("List users that can crosspost without spam detection")]
         public async Task<IResult> ListAsync()
         {
             var users = _settings.ExemptUserIds;
@@ -338,7 +362,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("add")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> AddAsync(IUser user)
+        [Description("Allow a user to crosspost without spam detection")]
+        public async Task<IResult> AddAsync([Description("User to exempt")] IUser user)
         {
             var users = _settings.ExemptUserIds;
             if (users.Contains(user.ID.Value))
@@ -352,7 +377,8 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
         [Command("remove")]
         [CommandType(ApplicationCommandType.ChatInput)]
-        public async Task<IResult> RemoveAsync(IUser user)
+        [Description("Remove crosspost exemption from a user")]
+        public async Task<IResult> RemoveAsync([Description("User to un-exempt")] IUser user)
         {
             var users = _settings.ExemptUserIds;
             if (!users.Contains(user.ID.Value))

@@ -22,8 +22,9 @@ namespace WindowsAppCommunity.Discord.ServerCompanion;
 public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
 {
     [Command("portal")]
+    [Description("Create linked portals between two channels for easy cross-navigation")]
     [SuppressInteractionResponse(true)]
-    public async Task<IResult> PortalAsync(IChannel destChannel)
+    public async Task<IResult> PortalAsync([Description("Destination channel to link")] IChannel destinationChannel)
     {
         try
         {
@@ -63,7 +64,7 @@ public class PortalCommandGroup(IInteractionContext interactionContext, IFeedbac
 
             var guildId = sourceChannelResult.Entity.GuildID.Value;
 
-            var destinationChannelId = destChannel.ID;
+            var destinationChannelId = destinationChannel.ID;
 
             if (sourceChannelId == destinationChannelId)
             {

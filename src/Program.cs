@@ -47,7 +47,9 @@ var isDebug =
     false;
 #endif
 
-var env = isDebug ? "dev" : "prod";
+// Allow forcing production mode via --prod flag
+var forceProd = args.Contains("--prod");
+var env = (isDebug && !forceProd) ? "dev" : "prod";
 
 var configProvider = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
