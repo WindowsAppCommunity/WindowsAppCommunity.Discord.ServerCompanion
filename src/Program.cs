@@ -76,21 +76,13 @@ var config = new ServerCompanionConfig(botToken, guildId);
 var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
 var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WindowsAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
 
-// Cancellation
-var cancellationTokenSource = new CancellationTokenSource();
-var cancellationToken = cancellationTokenSource.Token;
-Console.CancelKeyPress += (sender, eventArgs) =>
-{
-    eventArgs.Cancel = true;
-    cancellationTokenSource.Cancel();
-};
 
 // Storage setup
 var userProfileFolder = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-var wacsdkRepoFolder = (SystemFolder)await userProfileFolder.CreateFolderAsync(".wacsdk", overwrite: false, cancellationToken);
+var wacsdkRepoFolder = (SystemFolder)await userProfileFolder.CreateFolderAsync(".wacsdk", overwrite: false);
 
 // Dedicated ipfs repo for testing in.
-var kuboRepoFolder = (SystemFolder)await wacsdkRepoFolder.CreateFolderAsync(".ipfs", overwrite: false, cancellationToken);
+var kuboRepoFolder = (SystemFolder)await wacsdkRepoFolder.CreateFolderAsync(".ipfs", overwrite: false);
 
 // Bootstrap and start Kubo
 var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
@@ -102,12 +94,11 @@ var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
     LaunchConflictMode = BootstrapLaunchConflictMode.Attach,
     RoutingMode = DhtRoutingMode.None,
 };
-await kubo.StartAsync(cancellationToken);
+await kubo.StartAsync();
 
 // Command data / config
 var commandConfig = new WacsdkCommandConfig
 {
-    CancellationToken = cancellationToken,
     KuboOptions = new KuboOptions
     {
         IpnsLifetime = TimeSpan.FromDays(1),

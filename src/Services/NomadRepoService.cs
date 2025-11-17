@@ -19,7 +19,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Services
             Config = config;
         }
 
-        public async Task<(RepositoryContainer, WacsdkCommandConfig, WacsdkNomadSettings)> GetNomadRepoAsync(string repoId, string knownId, CancellationToken token)
+        public async Task<(RepositoryContainer, WacsdkCommandConfig)> GetNomadRepoAsync(string repoId, string knownId, CancellationToken token)
         {
             if (token.IsCancellationRequested)
             {
@@ -34,7 +34,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Services
 
             var repositoryContainer = new RepositoryContainer(Config.KuboOptions, Config.Client, repoSettings.ManagedKeys, repoSettings.ManagedUserConfigs, repoSettings.ManagedProjectConfigs, repoSettings.ManagedPublisherConfigs);
 
-            return (repositoryContainer, Config, repoSettings);
+            return (repositoryContainer, Config);
         }
 
         public async Task<string> CreateRepoAsync(string repoId, CancellationToken token)
@@ -53,7 +53,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Services
         {
             var repoIds = new List<string>();
             Logger.LogInformation($"Listing repositories");
-            await foreach (var item in Config.RepositoryStorage.GetFoldersAsync(Config.CancellationToken))
+            await foreach (var item in Config.RepositoryStorage.GetFoldersAsync(CancellationToken.None))
             {
                 repoIds.Add(item.Id);
             }

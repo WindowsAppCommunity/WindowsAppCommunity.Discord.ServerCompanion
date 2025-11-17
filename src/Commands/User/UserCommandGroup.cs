@@ -33,26 +33,26 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
 
             var knownId = userId.Value.ToString();
             var repoId = knownId;
-            var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepoAsync(repoId, knownId, CancellationToken.None);
+            var (repositoryContainer, Config) = await nomadRepoService.GetNomadRepoAsync(repoId, knownId, CancellationToken.None);
 
-            var createdUser = await repositoryContainer.UserRepository.CreateAsync(new(KnownId: knownId), Config.CancellationToken);
+            var createdUser = await repositoryContainer.UserRepository.CreateAsync(new(KnownId: knownId), CancellationToken.None);
 
             Logger.LogInformation($"Setting name and description");
 
             if (!string.IsNullOrWhiteSpace(name))
-                await createdUser.UpdateNameAsync(name, Config.CancellationToken);
+                await createdUser.UpdateNameAsync(name, CancellationToken.None);
 
             if (!string.IsNullOrWhiteSpace(description))
-                await createdUser.UpdateDescriptionAsync(description, Config.CancellationToken);
+                await createdUser.UpdateDescriptionAsync(description, CancellationToken.None);
 
             Logger.LogInformation($"Publishing local event stream to ipns");
-            await createdUser.PublishLocalAsync<ModifiableUser, ValueUpdateEvent>(Config.CancellationToken);
+            await createdUser.PublishLocalAsync<ModifiableUser, ValueUpdateEvent>(CancellationToken.None);
 
             Logger.LogInformation($"Publishing roaming value to ipns");
-            await createdUser.PublishRoamingAsync<ModifiableUser, ValueUpdateEvent, WindowsAppCommunity.Sdk.Models.User>(Config.CancellationToken);
+            await createdUser.PublishRoamingAsync<ModifiableUser, ValueUpdateEvent, WindowsAppCommunity.Sdk.Models.User>(CancellationToken.None);
 
             Logger.LogInformation($"Saving repository keys");
-            await repoSettings.SaveAsync(Config.CancellationToken);
+            await repoSettings.SaveAsync(CancellationToken.None);
 
             return await feedbackService.SendContextualSuccessAsync($"User created with id {createdUser.Id}");
         }
@@ -63,7 +63,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
             var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepoAsync(userId, userId, CancellationToken.None);
 
             Logger.LogInformation($"Getting user {userId}");
-            var user = await repositoryContainer.UserRepository.GetAsync(userId, Config.CancellationToken);
+            var user = await repositoryContainer.UserRepository.GetAsync(userId, CancellationToken.None);
             {
                 Logger.LogInformation($"{nameof(user.Id)}: {user.Id}");
                 Logger.LogInformation($"{nameof(user.Name)}: {user.Name}");
@@ -80,25 +80,25 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
                 }
 
                 Logger.LogInformation($"{nameof(user.GetImageFilesAsync)}:");
-                await foreach (var image in user.GetImageFilesAsync(Config.CancellationToken))
+                await foreach (var image in user.GetImageFilesAsync(CancellationToken.None))
                 {
                     Logger.LogInformation($"- {nameof(image.Id)}: {image.Id}");
                     Logger.LogInformation($"  {nameof(image.Name)}: {image.Name}");
 
-                    var cid = await image.GetCidAsync(Config.Client, new AddFileOptions { Pin = Config.KuboOptions.ShouldPin }, Config.CancellationToken);
+                    var cid = await image.GetCidAsync(Config.Client, new AddFileOptions { Pin = Config.KuboOptions.ShouldPin }, CancellationToken.None);
                     Logger.LogInformation($"  {nameof(StorableKuboExtensions.GetCidAsync)}: {cid}");
                     Logger.LogInformation($"  Type: {image.GetType()}");
                 }
 
                 Logger.LogInformation($"{nameof(user.GetConnectionsAsync)}:");
-                await foreach (var connection in user.GetConnectionsAsync(Config.CancellationToken))
+                await foreach (var connection in user.GetConnectionsAsync(CancellationToken.None))
                 {
                     Logger.LogInformation($"- {nameof(connection.Id)}: {connection.Id}");
-                    Logger.LogInformation($"  {nameof(connection.GetValueAsync)}: {await connection.GetValueAsync(Config.CancellationToken)}");
+                    Logger.LogInformation($"  {nameof(connection.GetValueAsync)}: {await connection.GetValueAsync(CancellationToken.None)}");
                 }
 
                 Logger.LogInformation($"{nameof(user.GetPublishersAsync)}:");
-                await foreach (var publisher in user.GetPublishersAsync(Config.CancellationToken))
+                await foreach (var publisher in user.GetPublishersAsync(CancellationToken.None))
                 {
                     Logger.LogInformation($"- {nameof(publisher.Id)}: {publisher.Id}");
                     Logger.LogInformation($"  {nameof(publisher.Name)}: {publisher.Name}");
@@ -109,7 +109,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
                 }
 
                 Logger.LogInformation($"{nameof(user.GetProjectsAsync)}:");
-                await foreach (var project in user.GetProjectsAsync(Config.CancellationToken))
+                await foreach (var project in user.GetProjectsAsync(CancellationToken.None))
                 {
                     Logger.LogInformation($"- {nameof(project.Id)}: {project.Id}");
                     Logger.LogInformation($"  {nameof(project.Name)}: {project.Name}");
@@ -128,7 +128,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User
             var (repositoryContainer, Config, repoSettings) = await nomadRepoService.GetNomadRepoAsync(repoId, repoId, CancellationToken.None);
             var response = new StringBuilder($"Listing users for repository {repoId}\n");
             Logger.LogInformation($"Listing users for repository {repoId}");
-            await foreach (var user in repositoryContainer.UserRepository.GetAsync(Config.CancellationToken))
+            await foreach (var user in repositoryContainer.UserRepository.GetAsync(CancellationToken.None))
             {
                 response.Append($"{nameof(user.Id)}: {user.Id}\n");
                 response.Append($"{nameof(user.Name)}: {user.Name}\n");

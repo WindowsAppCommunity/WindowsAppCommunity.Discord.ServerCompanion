@@ -43,18 +43,18 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Project
             if (!initialMessage.IsSuccess)
                 return initialMessage;
 
-            var createdProject = await repositoryContainer.ProjectRepository.CreateAsync(new(KnownId: knownId), Config.CancellationToken);
+            var createdProject = await repositoryContainer.ProjectRepository.CreateAsync(new(KnownId: knownId), CancellationToken.None);
             await channelApi.EditMessageAsync(channelId, initialMessage.Entity.ID, $"Created project with ID {createdProject.Id} via known ID {knownId}");
 
             await channelApi.EditMessageAsync(channelId, initialMessage.Entity.ID, "Setting name and description...");
-            await createdProject.UpdateNameAsync(name, Config.CancellationToken);
-            await createdProject.UpdateDescriptionAsync(description, Config.CancellationToken);
+            await createdProject.UpdateNameAsync(name, CancellationToken.None);
+            await createdProject.UpdateDescriptionAsync(description, CancellationToken.None);
 
             //  await initialMessage.EditMessageAsync(initialMessage.Entity.ID, "Publishing local event stream to ipns...");
-            await createdProject.FlushAsync(Config.CancellationToken);
+            await createdProject.FlushAsync(CancellationToken.None);
 
             await channelApi.EditMessageAsync(channelId, initialMessage.Entity.ID, "Saving repository keys...");
-            await repoSettings.SaveAsync(Config.CancellationToken);
+            await repoSettings.SaveAsync(CancellationToken.None);
 
             await channelApi.DeleteMessageAsync(channelId, initialMessage.Entity.ID);
             return await feedbackService.SendContextualSuccessAsync($"Project created successfully with id '{createdProject.Id}' name '{name}' and description '{description}'");
@@ -74,7 +74,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Project
 
             var initialMessage = await channelApi.CreateMessageAsync(channelId, $"Getting project {projectId}");
 
-            var project = await repositoryContainer.ProjectRepository.GetAsync(projectId, Config.CancellationToken);
+            var project = await repositoryContainer.ProjectRepository.GetAsync(projectId, CancellationToken.None);
             var responseBuilder = new StringBuilder();
 
             responseBuilder.AppendLine($"Project ID: {project.Id}");
@@ -100,25 +100,25 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Project
             }
 
             responseBuilder.AppendLine("Images:");
-            await foreach (var image in project.GetImageFilesAsync(Config.CancellationToken))
+            await foreach (var image in project.GetImageFilesAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"  - ID: {image.Id}");
                 responseBuilder.AppendLine($"    Name: {image.Name}");
 
-                var cid = await image.GetCidAsync(Config.Client, new AddFileOptions { Pin = Config.KuboOptions.ShouldPin }, Config.CancellationToken);
+                var cid = await image.GetCidAsync(Config.Client, new AddFileOptions { Pin = Config.KuboOptions.ShouldPin }, CancellationToken.None);
                 responseBuilder.AppendLine($"    CID: {cid}");
                 responseBuilder.AppendLine($"    Type: {image.GetType()}");
             }
 
             responseBuilder.AppendLine("Connections:");
-            await foreach (var connection in project.GetConnectionsAsync(Config.CancellationToken))
+            await foreach (var connection in project.GetConnectionsAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"  - ID: {connection.Id}");
-                responseBuilder.AppendLine($"    Value: {await connection.GetValueAsync(Config.CancellationToken)}");
+                responseBuilder.AppendLine($"    Value: {await connection.GetValueAsync(CancellationToken.None)}");
             }
 
             responseBuilder.AppendLine("Users:");
-            await foreach (var user in project.GetUsersAsync(Config.CancellationToken))
+            await foreach (var user in project.GetUsersAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"  - ID: {user.Id}");
                 responseBuilder.AppendLine($"    Name: {user.Name}");
@@ -129,7 +129,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Project
             }
 
             responseBuilder.AppendLine("Publisher:");
-            var publisher = await project.GetPublisherAsync(Config.CancellationToken);
+            var publisher = await project.GetPublisherAsync(CancellationToken.None);
             if (publisher is not null)
             {
                 responseBuilder.AppendLine($"  - ID: {publisher.Id}");
@@ -137,7 +137,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Project
             }
 
             responseBuilder.AppendLine("Dependencies:");
-            await foreach (var dependency in project.Dependencies.GetProjectsAsync(Config.CancellationToken))
+            await foreach (var dependency in project.Dependencies.GetProjectsAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"  - ID: {dependency.Id}");
                 responseBuilder.AppendLine($"    Name: {dependency.Name}");
@@ -163,7 +163,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Project
             var initialMessage = await channelApi.CreateMessageAsync(channelId, $"Listing projects...");
 
             var responseBuilder = new StringBuilder();
-            await foreach (var project in repositoryContainer.ProjectRepository.GetAsync(Config.CancellationToken))
+            await foreach (var project in repositoryContainer.ProjectRepository.GetAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"{nameof(project.Id)}: {project.Id}");
                 responseBuilder.AppendLine($"{nameof(project.Name)}: {project.Name}");

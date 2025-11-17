@@ -64,19 +64,19 @@ namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Repo
             responseBuilder.AppendLine($"Configs missing from repo: {repoMissingFromSavedConfigs.Count}");
 
             responseBuilder.AppendLine("Users:");
-            await foreach (var user in repositoryContainer.UserRepository.GetAsync(Config.CancellationToken))
+            await foreach (var user in repositoryContainer.UserRepository.GetAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"  - ID: {user.Id}");
             }
 
             responseBuilder.AppendLine("Projects:");
-            await foreach (var project in repositoryContainer.ProjectRepository.GetAsync(Config.CancellationToken))
+            await foreach (var project in repositoryContainer.ProjectRepository.GetAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"  - ID: {project.Id}");
             }
 
             responseBuilder.AppendLine("Publishers:");
-            await foreach (var publisher in repositoryContainer.PublisherRepository.GetAsync(Config.CancellationToken))
+            await foreach (var publisher in repositoryContainer.PublisherRepository.GetAsync(CancellationToken.None))
             {
                 responseBuilder.AppendLine($"  - ID: {publisher.Id}");
             }
