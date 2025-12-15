@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OwlCore.Diagnostics;
@@ -16,6 +16,8 @@ using WindowsAppCommunity.Discord.ServerCompanion;
 using WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands;
 using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
+using WindowsAppCommunity.Discord.ServerCompanion.Responders;
+using WindowsAppCommunity.Discord.ServerCompanion.Settings;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -45,7 +47,9 @@ var isDebug =
     false;
 #endif
 
-var env = isDebug ? "dev" : "prod";
+// Allow forcing production mode via --prod flag
+var forceProd = args.Contains("--prod");
+var env = (isDebug && !forceProd) ? "dev" : "prod";
 
 var configProvider = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
@@ -65,9 +69,15 @@ var config = new ServerCompanionConfig(botToken, guildId);
 var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
 var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WindowsAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
 
+// Initialize rate limiter settings
+var rateLimitFolder = (SystemFolder)await serverCompanionData.CreateFolderAsync("RateLimitSettings", overwrite: false, cancelTok);
+var rateLimitSettings = new RateLimitSettings(rateLimitFolder, SystemTextSettingsSerializer.Singleton);
+await rateLimitSettings.LoadAsync(cancelTok);
+
 // Service setup and init
 var services = new ServiceCollection()
     .AddSingleton(config)
+    .AddSingleton(rateLimitSettings)
     .AddDiscordGateway(_ => botToken)
     .AddDiscordCommands(enableSlash: true)
     .AddInteractivity()
@@ -75,8 +85,10 @@ var services = new ServiceCollection()
     .AddCommands()
         .AddCommandTree()
             .WithCommandGroup<PortalCommandGroup>()
+            .WithCommandGroup<SpamFilterCommandGroup>()
             .Finish()
     .AddResponder<PingPongResponder>()
+    .AddResponder<CrossChannelRateLimitResponder>()
     .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
     .AddAutocompleteProvider<SampleAutoCompleteProvider>()
     .BuildServiceProvider();

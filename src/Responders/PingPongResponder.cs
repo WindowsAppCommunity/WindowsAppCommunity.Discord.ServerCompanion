@@ -1,9 +1,11 @@
-﻿using Remora.Discord.API.Abstractions.Gateway.Events;
+using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Rest;
 using Remora.Discord.API.Objects;
 using Remora.Discord.Gateway.Responders;
 using Remora.Results;
 using System.Drawing;
+
+namespace WindowsAppCommunity.Discord.ServerCompanion.Responders;
 
 public class PingPongResponder : IResponder<IMessageCreate>
 {
