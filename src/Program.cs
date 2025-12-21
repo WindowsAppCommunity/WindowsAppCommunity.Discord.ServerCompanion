@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,6 +23,8 @@ using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands.Project;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands.Publisher;
 using Ipfs.CoreApi;
+using WindowsAppCommunity.Discord.ServerCompanion.Responders;
+using WindowsAppCommunity.Discord.ServerCompanion.Settings;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -52,7 +54,9 @@ var isDebug =
     false;
 #endif
 
-var env = isDebug ? "dev" : "prod";
+// Allow forcing production mode via --prod flag
+var forceProd = args.Contains("--prod");
+var env = (isDebug && !forceProd) ? "dev" : "prod";
 
 var configProvider = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
@@ -104,12 +108,18 @@ var wacNomadEntityRepoGroupRepository = new WacNomadRepoGroupRepository
     DataFolder = nomadEntityRepoGroupRepositoryDataFolder,
 };
 
+// Initialize rate limiter settings
+var rateLimitFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("RateLimitSettings", overwrite: false, cancelTok);
+var rateLimitSettings = new RateLimitSettings(rateLimitFolder, SystemTextSettingsSerializer.Singleton);
+await rateLimitSettings.LoadAsync(cancelTok);
+
 // Service setup and init  
 var services = new ServiceCollection()
+  .AddSingleton(rateLimitSettings)
   .AddSingleton(kubo)
   .AddSingleton<ICoreApi>(kubo.Client)
   .AddSingleton<IKuboOptions>(kuboOptions)
-  .AddSingleton(wacNomadEntityRepoGroupRepository)  
+  .AddSingleton(wacNomadEntityRepoGroupRepository)
   .AddDiscordGateway(_ => botToken)
   .AddDiscordCommands(enableSlash: true)
   .AddInteractivity()
@@ -118,15 +128,17 @@ var services = new ServiceCollection()
       .AddCommandTree()
           .WithCommandGroup<PortalCommandGroup>()
           .WithCommandGroup<SampleCommandGroup>()
+            .WithCommandGroup<SpamFilterCommandGroup>()
           //.WithCommandGroup<UserCommandGroup>()
           //.WithCommandGroup<ProjectCommandGroup>()
           //.WithCommandGroup<PublisherCommandGroup>()
           .Finish()
   .AddResponder<PingPongResponder>()
+  .AddResponder<CrossChannelRateLimitResponder>()
   .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
   .AddAutocompleteProvider<SampleAutoCompleteProvider>()
   .BuildServiceProvider();
-
+  
 var log = services.GetRequiredService<ILogger<Program>>();
 var gatewayClient = services.GetRequiredService<DiscordGatewayClient>();
 var slashService = services.GetRequiredService<SlashService>();
