@@ -2,15 +2,15 @@
 using OwlCore.Kubo;
 using OwlCore.Nomad.Kubo;
 using OwlCore.Storage;
-using WindowsAppCommunity.Discord.ServerCompanion.Services;
 
-public class WacsdkNomadSettings : SettingsBase
+using WindowsAppCommunity.Discord.ServerCompanion;
+
+/// <summary>
+/// Manages the settings for an individual user's Nomad repository containing the <see cref="NomadKuboEventStreamHandlerConfig{T}"/>
+/// needed for constructing wacsdk entity instances. 
+/// </summary>
+public class WacsdkNomadSettings(IModifiableFolder folder) : SettingsBase(folder, NewtonsoftSerializer.Singleton)
 {
-    public WacsdkNomadSettings(IModifiableFolder folder)
-        : base(folder, NewtonsoftSerializer.Singleton)
-    {
-    }
-
     public List<Key> ManagedKeys
     {
         get => GetSetting<List<Key>>(() => []);

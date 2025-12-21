@@ -20,13 +20,9 @@ using WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands.User;
 using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
-using WindowsAppCommunity.Sdk.Nomad;
-using Org.BouncyCastle.Ocsp;
-using OwlCore.Storage;
-using WindowsAppCommunity.Discord.ServerCompanion.Services;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands.Project;
-using WindowsAppCommunity.Discord.ServerCompanion.Commands.Repo;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands.Publisher;
+using Ipfs.CoreApi;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -73,18 +69,13 @@ ArgumentNullException.ThrowIfNullOrEmpty(guildId);
 // Service setup
 var config = new ServerCompanionConfig(botToken, guildId);
 
-var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
-var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WindowsAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
-
-
-// Storage setup
-var userProfileFolder = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-var wacsdkRepoFolder = (SystemFolder)await userProfileFolder.CreateFolderAsync(".wacsdk", overwrite: false);
-
-// Dedicated ipfs repo for testing in.
-var kuboRepoFolder = (SystemFolder)await wacsdkRepoFolder.CreateFolderAsync(".ipfs", overwrite: false);
+var appDataFolder = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+var windowsAppCommunityFolder = (SystemFolder)await appDataFolder.CreateFolderAsync("WindowsAppCommunity", overwrite: false, cancelTok);
+var wacDiscordFolder = (SystemFolder)await windowsAppCommunityFolder.CreateFolderAsync("Discord", overwrite: false, cancelTok);
+var serverCompanionDataFolder = (SystemFolder)await wacDiscordFolder.CreateFolderAsync("ServerCompanion", overwrite: false, cancelTok);
 
 // Bootstrap and start Kubo
+var kuboRepoFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync(".ipfs", overwrite: false);
 var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
 {
     GatewayUri = new Uri("http://127.0.0.1:8025"),
@@ -92,26 +83,33 @@ var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
     GatewayUriMode = ConfigMode.OverwriteExisting,
     ApiUriMode = ConfigMode.OverwriteExisting,
     LaunchConflictMode = BootstrapLaunchConflictMode.Attach,
-    RoutingMode = DhtRoutingMode.None,
+    RoutingMode = DhtRoutingMode.Auto,
 };
+
 await kubo.StartAsync();
 
-// Command data / config
-var commandConfig = new WacsdkCommandConfig
+var kuboOptions = new KuboOptions
 {
-    KuboOptions = new KuboOptions
-    {
-        IpnsLifetime = TimeSpan.FromDays(1),
-        ShouldPin = false,
-        UseCache = false,
-    },
+    IpnsLifetime = TimeSpan.FromDays(1),
+    ShouldPin = false,
+    UseCache = false,
+};
+
+// Nomad entity data repo manager
+var nomadEntityRepoGroupRepositoryDataFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("Nomad", overwrite: false, cancelTok);
+var wacNomadEntityRepoGroupRepository = new WacNomadRepoGroupRepository
+{
     Client = kubo.Client,
-    RepositoryStorage = wacsdkRepoFolder,
+    KuboOptions = kuboOptions,
+    DataFolder = nomadEntityRepoGroupRepositoryDataFolder,
 };
 
 // Service setup and init  
 var services = new ServiceCollection()
-  .AddSingleton(config)
+  .AddSingleton(kubo)
+  .AddSingleton<ICoreApi>(kubo.Client)
+  .AddSingleton<IKuboOptions>(kuboOptions)
+  .AddSingleton(wacNomadEntityRepoGroupRepository)  
   .AddDiscordGateway(_ => botToken)
   .AddDiscordCommands(enableSlash: true)
   .AddInteractivity()
@@ -120,15 +118,13 @@ var services = new ServiceCollection()
       .AddCommandTree()
           .WithCommandGroup<PortalCommandGroup>()
           .WithCommandGroup<SampleCommandGroup>()
-          .WithCommandGroup<UserCommandGroup>()
-          .WithCommandGroup<ProjectCommandGroup>()
-          .WithCommandGroup<RepoCommandGroup>()
-          .WithCommandGroup<PublisherCommandGroup>()
+          //.WithCommandGroup<UserCommandGroup>()
+          //.WithCommandGroup<ProjectCommandGroup>()
+          //.WithCommandGroup<PublisherCommandGroup>()
           .Finish()
   .AddResponder<PingPongResponder>()
   .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
   .AddAutocompleteProvider<SampleAutoCompleteProvider>()
-  .AddSingleton<INomadRepoService>(provider => new NomadRepoService(commandConfig)) // Pass WacsdkCommandConfig to INomadRepoService  
   .BuildServiceProvider();
 
 var log = services.GetRequiredService<ILogger<Program>>();

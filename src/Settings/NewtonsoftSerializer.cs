@@ -3,7 +3,7 @@ using OwlCore.ComponentModel;
 using OwlCore.Extensions;
 using System.Text;
 
-namespace WindowsAppCommunity.Discord.ServerCompanion.Services;
+namespace WindowsAppCommunity.Discord.ServerCompanion;
 
 /// <summary>
 /// An <see cref="IAsyncSerializer{TSerialized}"/> and implementation for serializing and deserializing streams using System.Text.Json.
