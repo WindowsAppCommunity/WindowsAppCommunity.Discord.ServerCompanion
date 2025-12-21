@@ -14,41 +14,10 @@ using WindowsAppCommunity.Sdk.Nomad;
 
 namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User;
 
+[Group("user")]
 public class UserCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNomadRepoGroupRepository nomadRepoService, IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
 {
-    [Command("createUser")]
-    public async Task<IResult> CreateUser(string name, string description)
-    {
-        if (!context.TryGetUserID(out var userId))
-            return await feedbackService.SendContextualErrorAsync("Could not determine the user ID.");
-
-        var knownId = userId.Value.ToString();
-        var repoId = knownId;
-        var nomadRepoItem = await nomadRepoService.GetAsync(repoId, CancellationToken.None);
-
-        var createdUser = await nomadRepoItem.RepositoryGroup.UserRepository.CreateAsync(new(KnownId: knownId), CancellationToken.None);
-
-        Logger.LogInformation($"Setting name and description");
-
-        if (!string.IsNullOrWhiteSpace(name))
-            await createdUser.UpdateNameAsync(name, CancellationToken.None);
-
-        if (!string.IsNullOrWhiteSpace(description))
-            await createdUser.UpdateDescriptionAsync(description, CancellationToken.None);
-
-        Logger.LogInformation($"Publishing local event stream to ipns");
-        await createdUser.PublishLocalAsync<ModifiableUser, ValueUpdateEvent>(CancellationToken.None);
-
-        Logger.LogInformation($"Publishing roaming value to ipns");
-        await createdUser.PublishRoamingAsync<ModifiableUser, ValueUpdateEvent, WindowsAppCommunity.Sdk.Models.User>(CancellationToken.None);
-
-        Logger.LogInformation($"Saving repository keys");
-        await nomadRepoItem.Settings.SaveAsync(CancellationToken.None);
-
-        return await feedbackService.SendContextualSuccessAsync($"User created with id {createdUser.Id}");
-    }
-
-    [Command("getUser")]
+    [Command("get")]
     public async Task<IResult> GetUser(string userId)
     {
         // TODO: This gets by discord ID, not by user ipns id. Not all users will have a discord ID.
@@ -114,7 +83,7 @@ public class UserCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNom
         return await feedbackService.SendContextualSuccessAsync($"User {user.Id}, Username {user.Name}, User Description {user.Description}");
     }
 
-    [Command("listUser")]
+    [Command("list")]
     public async Task<IResult> ListUser(string repoId)
     {
         var nomadRepoItem = await nomadRepoService.GetAsync(repoId, CancellationToken.None);

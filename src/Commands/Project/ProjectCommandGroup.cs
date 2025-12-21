@@ -8,13 +8,13 @@ using Remora.Discord.Commands.Contexts;
 using Remora.Discord.Commands.Extensions;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.Project;
 
+[Group("project")]
 public class ProjectCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNomadRepoGroupRepository nomadRepoService, IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
 {
-    [Command("createProject")]
+    [Command("create")]
     public async Task<IResult> CreateProjectAsync(string name, string description)
     {
         if (!context.TryGetUserID(out var userId))
@@ -49,7 +49,7 @@ public class ProjectCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWac
         return await feedbackService.SendContextualSuccessAsync($"Project created successfully with id '{createdProject.Id}' name '{name}' and description '{description}'");
     }
 
-    [Command("getProject")]
+    [Command("get")]
     public async Task<IResult> GetProjectAsync(string projectId)
     {
         if (!context.TryGetUserID(out var userId))
@@ -137,7 +137,7 @@ public class ProjectCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWac
         return await feedbackService.SendContextualSuccessAsync(responseBuilder.ToString());
     }
 
-    [Command("listProject")]
+    [Command("list")]
     public async Task<IResult> ListProjectAsync()
     {
         if (!context.TryGetUserID(out var userId))
