@@ -8,23 +8,13 @@ namespace WindowsAppCommunity.Discord.ServerCompanion;
 /// <summary>
 /// An <see cref="IAsyncSerializer{TSerialized}"/> implementation for serializing and deserializing streams using System.Text.Json.
 /// </summary>
-public class SystemTextSettingsSerializer : IAsyncSerializer<Stream>
+/// <remarks>
+/// Initializes a new instance of the <see cref="SystemTextSettingsSerializer"/> class.
+/// </remarks>
+/// <param name="context">The JSON serializer context providing type information.</param>
+public class SystemTextSettingsSerializer(JsonSerializerContext context) : IAsyncSerializer<Stream>
 {
-    private readonly JsonSerializerContext _context;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SystemTextSettingsSerializer"/> class.
-    /// </summary>
-    /// <param name="context">The JSON serializer context providing type information.</param>
-    public SystemTextSettingsSerializer(JsonSerializerContext context)
-    {
-        _context = context;
-    }
-
-    /// <summary>
-    /// Gets a singleton instance of <see cref="SystemTextSettingsSerializer"/> with <see cref="RateLimitSerializerContext"/>.
-    /// </summary>
-    public static SystemTextSettingsSerializer Singleton { get; } = new(RateLimitSerializerContext.Default);
+    private readonly JsonSerializerContext _context = context;
 
     /// <inheritdoc />
     public async Task<Stream> SerializeAsync<T>(T data, CancellationToken? cancellationToken = null)

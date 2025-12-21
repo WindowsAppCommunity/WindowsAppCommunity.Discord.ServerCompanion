@@ -6,7 +6,6 @@ using Remora.Discord.Commands.Attributes;
 using Remora.Discord.Commands.Conditions;
 using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
-using WindowsAppCommunity.Discord.ServerCompanion.Settings;
 
 namespace WindowsAppCommunity.Discord.ServerCompanion.Commands;
 

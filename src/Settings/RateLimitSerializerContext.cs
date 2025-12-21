@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using WindowsAppCommunity.Discord.ServerCompanion.Settings;
 
 namespace WindowsAppCommunity.Discord.ServerCompanion;
 

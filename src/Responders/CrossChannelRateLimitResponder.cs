@@ -9,7 +9,6 @@ using Remora.Discord.Gateway.Responders;
 using Remora.Rest.Core;
 using Remora.Results;
 using WindowsAppCommunity.Discord.ServerCompanion.Extensions;
-using WindowsAppCommunity.Discord.ServerCompanion.Settings;
 
 namespace WindowsAppCommunity.Discord.ServerCompanion.Responders;
 

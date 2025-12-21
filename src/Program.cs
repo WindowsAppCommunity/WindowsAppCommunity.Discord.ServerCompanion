@@ -24,7 +24,6 @@ using WindowsAppCommunity.Discord.ServerCompanion.Commands.Project;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands.Publisher;
 using Ipfs.CoreApi;
 using WindowsAppCommunity.Discord.ServerCompanion.Responders;
-using WindowsAppCommunity.Discord.ServerCompanion.Settings;
 
 // Cancellation setup
 var cancellationSource = new CancellationTokenSource();
@@ -110,7 +109,7 @@ var wacNomadEntityRepoGroupRepository = new WacNomadRepoGroupRepository
 
 // Initialize rate limiter settings
 var rateLimitFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("RateLimitSettings", overwrite: false, cancelTok);
-var rateLimitSettings = new RateLimitSettings(rateLimitFolder, SystemTextSettingsSerializer.Singleton);
+var rateLimitSettings = new RateLimitSettings(rateLimitFolder);
 await rateLimitSettings.LoadAsync(cancelTok);
 
 // Service setup and init  

@@ -2,23 +2,17 @@ using OwlCore.ComponentModel;
 using OwlCore.Storage;
 using Remora.Rest.Core;
 
-namespace WindowsAppCommunity.Discord.ServerCompanion.Settings;
+namespace WindowsAppCommunity.Discord.ServerCompanion;
 
 /// <summary>
 /// Settings class for cross-channel spam rate limiter configuration and runtime tracking.
 /// </summary>
-public class RateLimitSettings : SettingsBase
+/// <remarks>
+/// Initializes a new instance of the <see cref="RateLimitSettings"/> class.
+/// </remarks>
+/// <param name="folder">The folder to store settings in.</param>
+public class RateLimitSettings(IModifiableFolder folder) : SettingsBase(folder, new SystemTextSettingsSerializer(RateLimitSerializerContext.Default))
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RateLimitSettings"/> class.
-    /// </summary>
-    /// <param name="folder">The folder to store settings in.</param>
-    /// <param name="settingSerializer">The serializer to use for settings.</param>
-    public RateLimitSettings(IModifiableFolder folder, IAsyncSerializer<Stream> settingSerializer)
-        : base(folder, settingSerializer)
-    {
-    }
-
     /// <summary>
     /// Gets or sets the runtime tracking dictionary mapping content hashes to message buckets.
     /// </summary>

@@ -20,7 +20,8 @@ public class UserCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNom
     [Command("get")]
     public async Task<IResult> GetUser(string userId)
     {
-        // TODO: This gets by discord ID, not by user ipns id. Not all users will have a discord ID.
+        // TODO: This gets by discord ID, not by user ipns id.
+        // Nomad repo should always represent the calling user, not the user being requested.
         var nomadRepoItem = await nomadRepoService.GetAsync(userId, CancellationToken.None);
 
         Logger.LogInformation($"Getting user {userId}");
