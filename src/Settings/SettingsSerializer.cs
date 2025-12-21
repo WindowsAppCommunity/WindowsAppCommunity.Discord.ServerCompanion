@@ -2,6 +2,8 @@
 using Newtonsoft.Json;
 using OwlCore.ComponentModel;
 
+namespace WindowsAppCommunity.Discord.ServerCompanion;
+
 /// <summary>
 /// An <see cref="IAsyncSerializer{TSerialized}"/> and implementation for serializing and deserializing streams using Newtonsoft.Json.
 /// </summary>

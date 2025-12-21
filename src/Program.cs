@@ -1,7 +1,10 @@
+using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OwlCore.Diagnostics;
+using OwlCore.Kubo;
+using OwlCore.Nomad.Kubo;
 using OwlCore.Storage.System.IO;
 using Remora.Commands.Extensions;
 using Remora.Discord.API.Abstractions.Gateway.Commands;
@@ -15,7 +18,11 @@ using Remora.Results;
 using WindowsAppCommunity.Discord.ServerCompanion;
 using WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.User;
 using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Project;
+using WindowsAppCommunity.Discord.ServerCompanion.Commands.Publisher;
+using Ipfs.CoreApi;
 using WindowsAppCommunity.Discord.ServerCompanion.Responders;
 using WindowsAppCommunity.Discord.ServerCompanion.Settings;
 
@@ -66,33 +73,72 @@ ArgumentNullException.ThrowIfNullOrEmpty(guildId);
 // Service setup
 var config = new ServerCompanionConfig(botToken, guildId);
 
-var appData = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
-var serverCompanionData = (SystemFolder)await appData.CreateFolderAsync("WindowsAppCommunity.Discord.ServerCompanion", overwrite: false, cancelTok);
+var appDataFolder = new SystemFolder(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+var windowsAppCommunityFolder = (SystemFolder)await appDataFolder.CreateFolderAsync("WindowsAppCommunity", overwrite: false, cancelTok);
+var wacDiscordFolder = (SystemFolder)await windowsAppCommunityFolder.CreateFolderAsync("Discord", overwrite: false, cancelTok);
+var serverCompanionDataFolder = (SystemFolder)await wacDiscordFolder.CreateFolderAsync("ServerCompanion", overwrite: false, cancelTok);
+
+// Bootstrap and start Kubo
+var kuboRepoFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync(".ipfs", overwrite: false);
+var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
+{
+    GatewayUri = new Uri("http://127.0.0.1:8025"),
+    ApiUri = new Uri("http://127.0.0.1:5025"),
+    GatewayUriMode = ConfigMode.OverwriteExisting,
+    ApiUriMode = ConfigMode.OverwriteExisting,
+    LaunchConflictMode = BootstrapLaunchConflictMode.Attach,
+    RoutingMode = DhtRoutingMode.Auto,
+};
+
+await kubo.StartAsync();
+
+var kuboOptions = new KuboOptions
+{
+    IpnsLifetime = TimeSpan.FromDays(1),
+    ShouldPin = false,
+    UseCache = false,
+};
+
+// Nomad entity data repo manager
+var nomadEntityRepoGroupRepositoryDataFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("Nomad", overwrite: false, cancelTok);
+var wacNomadEntityRepoGroupRepository = new WacNomadRepoGroupRepository
+{
+    Client = kubo.Client,
+    KuboOptions = kuboOptions,
+    DataFolder = nomadEntityRepoGroupRepositoryDataFolder,
+};
 
 // Initialize rate limiter settings
-var rateLimitFolder = (SystemFolder)await serverCompanionData.CreateFolderAsync("RateLimitSettings", overwrite: false, cancelTok);
+var rateLimitFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("RateLimitSettings", overwrite: false, cancelTok);
 var rateLimitSettings = new RateLimitSettings(rateLimitFolder, SystemTextSettingsSerializer.Singleton);
 await rateLimitSettings.LoadAsync(cancelTok);
 
-// Service setup and init
+// Service setup and init  
 var services = new ServiceCollection()
-    .AddSingleton(config)
-    .AddSingleton(rateLimitSettings)
-    .AddDiscordGateway(_ => botToken)
-    .AddDiscordCommands(enableSlash: true)
-    .AddInteractivity()
-    .AddInteractionGroup<MyInteractions>()
-    .AddCommands()
-        .AddCommandTree()
-            .WithCommandGroup<PortalCommandGroup>()
+  .AddSingleton(rateLimitSettings)
+  .AddSingleton(kubo)
+  .AddSingleton<ICoreApi>(kubo.Client)
+  .AddSingleton<IKuboOptions>(kuboOptions)
+  .AddSingleton(wacNomadEntityRepoGroupRepository)
+  .AddDiscordGateway(_ => botToken)
+  .AddDiscordCommands(enableSlash: true)
+  .AddInteractivity()
+  .AddInteractionGroup<MyInteractions>()
+  .AddCommands()
+      .AddCommandTree()
+          .WithCommandGroup<PortalCommandGroup>()
+          .WithCommandGroup<SampleCommandGroup>()
             .WithCommandGroup<SpamFilterCommandGroup>()
-            .Finish()
-    .AddResponder<PingPongResponder>()
-    .AddResponder<CrossChannelRateLimitResponder>()
-    .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
-    .AddAutocompleteProvider<SampleAutoCompleteProvider>()
-    .BuildServiceProvider();
-
+          //.WithCommandGroup<UserCommandGroup>()
+          //.WithCommandGroup<ProjectCommandGroup>()
+          //.WithCommandGroup<PublisherCommandGroup>()
+          .Finish()
+  .AddResponder<PingPongResponder>()
+  .AddResponder<CrossChannelRateLimitResponder>()
+  .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
+  .AddAutocompleteProvider<SampleAutoCompleteProvider>()
+  .BuildServiceProvider();
+  
 var log = services.GetRequiredService<ILogger<Program>>();
 var gatewayClient = services.GetRequiredService<DiscordGatewayClient>();
 var slashService = services.GetRequiredService<SlashService>();
