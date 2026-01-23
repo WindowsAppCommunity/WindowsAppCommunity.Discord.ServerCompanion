@@ -114,7 +114,8 @@ await rateLimitSettings.LoadAsync(cancelTok);
 
 // Service setup and init  
 var services = new ServiceCollection()
-  .AddSingleton(rateLimitSettings)
+  .AddSingleton<RateLimitSettings>(rateLimitSettings)
+  .AddSingleton<ServerCompanionConfig>(config)
   .AddSingleton(kubo)
   .AddSingleton<ICoreApi>(kubo.Client)
   .AddSingleton<IKuboOptions>(kuboOptions)
