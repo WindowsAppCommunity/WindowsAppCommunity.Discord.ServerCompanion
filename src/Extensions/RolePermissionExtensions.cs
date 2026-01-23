@@ -29,7 +29,7 @@ public static class RolePermissionExtensions
         // Get all roles in the guild
         var guildRolesResult = await guildApi.GetGuildRolesAsync(guildId, cancellationToken);
         if (!guildRolesResult.IsSuccess)
-            throw new RolePermissionException(requiredRoleNames);
+            throw new RolePermissionException("Unable to verify permissions. Please try again later.", requiredRoleNames);
 
         var guildRoles = guildRolesResult.Entity;
         
@@ -43,13 +43,13 @@ public static class RolePermissionExtensions
         if (requiredRoleIds.Count == 0)
         {
             // None of the required roles exist in this guild
-            throw new RolePermissionException(requiredRoleNames);
+            throw new RolePermissionException("This server does not have any of the required roles configured.", requiredRoleNames);
         }
 
         // Get the guild member to check their roles
         var memberResult = await guildApi.GetGuildMemberAsync(guildId, userId, cancellationToken);
         if (!memberResult.IsSuccess)
-            throw new RolePermissionException(requiredRoleNames);
+            throw new RolePermissionException("Unable to verify your membership. Please try again later.", requiredRoleNames);
 
         var member = memberResult.Entity;
         

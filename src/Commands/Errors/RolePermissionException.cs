@@ -19,4 +19,15 @@ public class RolePermissionException : Exception
     {
         RequiredRoles = requiredRoles;
     }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RolePermissionException"/> class with a custom message.
+    /// </summary>
+    /// <param name="message">A custom error message.</param>
+    /// <param name="requiredRoles">The role names that were required.</param>
+    public RolePermissionException(string message, params string[] requiredRoles)
+        : base($"{message} Required role(s): {string.Join(", ", requiredRoles)}")
+    {
+        RequiredRoles = requiredRoles;
+    }
 }
