@@ -116,8 +116,9 @@ await rateLimitSettings.LoadAsync(cancelTok);
 
 // Service setup and init  
 var services = new ServiceCollection()
-  .AddSingleton(rateLimitSettings)
   .AddSingleton(discordServerHostingSettings)
+  .AddSingleton<RateLimitSettings>(rateLimitSettings)
+  .AddSingleton<ServerCompanionConfig>(config)
   .AddSingleton(kubo)
   .AddSingleton(new ReactionTracker())
   .AddSingleton<ICoreApi>(kubo.Client)
