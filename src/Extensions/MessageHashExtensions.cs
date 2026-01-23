@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace WindowsAppCommunity.Discord.ServerCompanion.Extensions;
+namespace WindowsAppCommunity.Discord.ServerCompanion;
 
 /// <summary>
 /// Extension methods for hashing message text content.

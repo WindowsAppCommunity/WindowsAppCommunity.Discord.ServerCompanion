@@ -1,4 +1,3 @@
-using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,10 +17,7 @@ using Remora.Results;
 using WindowsAppCommunity.Discord.ServerCompanion;
 using WindowsAppCommunity.Discord.ServerCompanion.Autocomplete;
 using WindowsAppCommunity.Discord.ServerCompanion.Commands;
-using WindowsAppCommunity.Discord.ServerCompanion.Commands.User;
 using WindowsAppCommunity.Discord.ServerCompanion.Interactivity;
-using WindowsAppCommunity.Discord.ServerCompanion.Commands.Project;
-using WindowsAppCommunity.Discord.ServerCompanion.Commands.Publisher;
 using Ipfs.CoreApi;
 using WindowsAppCommunity.Discord.ServerCompanion.Responders;
 
@@ -81,8 +77,8 @@ var serverCompanionDataFolder = (SystemFolder)await wacDiscordFolder.CreateFolde
 var kuboRepoFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync(".ipfs", overwrite: false);
 var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
 {
-    GatewayUri = new Uri("http://127.0.0.1:8025"),
-    ApiUri = new Uri("http://127.0.0.1:5025"),
+    GatewayUri = new Uri("http://127.0.0.1:8026"),
+    ApiUri = new Uri("http://127.0.0.1:5026"),
     GatewayUriMode = ConfigMode.OverwriteExisting,
     ApiUriMode = ConfigMode.OverwriteExisting,
     LaunchConflictMode = BootstrapLaunchConflictMode.Attach,
@@ -100,12 +96,18 @@ var kuboOptions = new KuboOptions
 
 // Nomad entity data repo manager
 var nomadEntityRepoGroupRepositoryDataFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("Nomad", overwrite: false, cancelTok);
-var wacNomadEntityRepoGroupRepository = new WacNomadRepoGroupRepository
+var wacNomadEntityRepoGroupRepository = new WacNomadRepoGroupRepository(nomadEntityRepoGroupRepositoryDataFolder)
 {
     Client = kubo.Client,
     KuboOptions = kuboOptions,
-    DataFolder = nomadEntityRepoGroupRepositoryDataFolder,
 };
+
+// Discord server-hosted user settings repository
+var discordServerHostedUserSettingsRepoDataFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("HostedUserSettings", overwrite: false, cancelTok);
+var discordServerHostedUserSettingsRepo = new DiscordServerHostedUserSettingsRepository(discordServerHostedUserSettingsRepoDataFolder);
+
+var discordServerHostingSettingsDataFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("HostingSettings", overwrite: false, cancelTok);
+var discordServerHostingSettings = new DiscordServerHostingSettings(discordServerHostingSettingsDataFolder);
 
 // Initialize rate limiter settings
 var rateLimitFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("RateLimitSettings", overwrite: false, cancelTok);
@@ -114,31 +116,37 @@ await rateLimitSettings.LoadAsync(cancelTok);
 
 // Service setup and init  
 var services = new ServiceCollection()
+  .AddSingleton(discordServerHostingSettings)
   .AddSingleton<RateLimitSettings>(rateLimitSettings)
   .AddSingleton<ServerCompanionConfig>(config)
   .AddSingleton(kubo)
+  .AddSingleton(new ReactionTracker())
   .AddSingleton<ICoreApi>(kubo.Client)
   .AddSingleton<IKuboOptions>(kuboOptions)
-  .AddSingleton(wacNomadEntityRepoGroupRepository)
+  .AddSingleton<IWacNomadRepoGroupRepository>(wacNomadEntityRepoGroupRepository)
+  .AddSingleton<IDiscordServerHostedUserSettingsRepository>(discordServerHostedUserSettingsRepo)
   .AddDiscordGateway(_ => botToken)
   .AddDiscordCommands(enableSlash: true)
   .AddInteractivity()
   .AddInteractionGroup<MyInteractions>()
+  .AddInteractionGroup<RegisterInteractionGroup>()
   .AddCommands()
       .AddCommandTree()
           .WithCommandGroup<PortalCommandGroup>()
-          .WithCommandGroup<SampleCommandGroup>()
-            .WithCommandGroup<SpamFilterCommandGroup>()
-          //.WithCommandGroup<UserCommandGroup>()
+          //.WithCommandGroup<SampleCommandGroup>()
+          .WithCommandGroup<SpamFilterCommandGroup>()
+          .WithCommandGroup<UserCommandGroup>()
+          .WithCommandGroup<RegisterCommandGroup>()
           //.WithCommandGroup<ProjectCommandGroup>()
           //.WithCommandGroup<PublisherCommandGroup>()
           .Finish()
   .AddResponder<PingPongResponder>()
   .AddResponder<CrossChannelRateLimitResponder>()
-  .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents)
+  .AddResponder<ReactionResponder>()
+  .Configure<DiscordGatewayClientOptions>(g => g.Intents |= GatewayIntents.MessageContents | GatewayIntents.DirectMessageReactions)
   .AddAutocompleteProvider<SampleAutoCompleteProvider>()
   .BuildServiceProvider();
-  
+
 var log = services.GetRequiredService<ILogger<Program>>();
 var gatewayClient = services.GetRequiredService<DiscordGatewayClient>();
 var slashService = services.GetRequiredService<SlashService>();

@@ -8,7 +8,6 @@ using Remora.Discord.API.Objects;
 using Remora.Discord.Gateway.Responders;
 using Remora.Rest.Core;
 using Remora.Results;
-using WindowsAppCommunity.Discord.ServerCompanion.Extensions;
 
 namespace WindowsAppCommunity.Discord.ServerCompanion.Responders;
 

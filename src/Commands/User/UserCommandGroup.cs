@@ -12,17 +12,24 @@ using Remora.Discord.Commands.Feedback.Services;
 using Remora.Results;
 using WindowsAppCommunity.Sdk.Nomad;
 
-namespace WindowsAppCommunity.Discord.ServerCompanion.Commands.User;
+namespace WindowsAppCommunity.Discord.ServerCompanion.Commands;
 
 [Group("user")]
-public class UserCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNomadRepoGroupRepository nomadRepoService, IInteractionContext interactionContext, IFeedbackService feedbackService, IDiscordRestInteractionAPI interactionAPI, IDiscordRestChannelAPI channelApi, IDiscordRestGuildAPI guildApi, ICommandContext context) : Remora.Commands.Groups.CommandGroup
+public partial class UserCommandGroup(
+    ICommandContext CommandContext,
+    IFeedbackService Feedback,
+    IDiscordServerHostedUserSettingsRepository HostedUserSettingsRepo,
+    ICoreApi Client,
+    IKuboOptions KuboOptions,
+    IWacNomadRepoGroupRepository EntityNomadRepoGroupRepository
+) : Remora.Commands.Groups.CommandGroup
 {
     [Command("get")]
     public async Task<IResult> GetUser(string userId)
     {
         // TODO: This gets by discord ID, not by user ipns id.
         // Nomad repo should always represent the calling user, not the user being requested.
-        var nomadRepoItem = await nomadRepoService.GetAsync(userId, CancellationToken.None);
+        var nomadRepoItem = await EntityNomadRepoGroupRepository.GetAsync(userId, CancellationToken.None);
 
         Logger.LogInformation($"Getting user {userId}");
         var user = await nomadRepoItem.RepositoryGroup.UserRepository.GetAsync(userId, CancellationToken.None);
@@ -47,7 +54,7 @@ public class UserCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNom
                 Logger.LogInformation($"- {nameof(image.Id)}: {image.Id}");
                 Logger.LogInformation($"  {nameof(image.Name)}: {image.Name}");
 
-                var cid = await image.GetCidAsync(client, new AddFileOptions { Pin = kuboOptions.ShouldPin }, CancellationToken.None);
+                var cid = await image.GetCidAsync(Client, new AddFileOptions { Pin = KuboOptions.ShouldPin }, CancellationToken.None);
                 Logger.LogInformation($"  {nameof(StorableKuboExtensions.GetCidAsync)}: {cid}");
                 Logger.LogInformation($"  Type: {image.GetType()}");
             }
@@ -81,13 +88,13 @@ public class UserCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNom
                 Logger.LogInformation($"    {nameof(project.Role.Description)}: {project.Role.Description}");
             }
         }
-        return await feedbackService.SendContextualSuccessAsync($"User {user.Id}, Username {user.Name}, User Description {user.Description}");
+        return await Feedback.SendContextualSuccessAsync($"User {user.Id}, Username {user.Name}, User Description {user.Description}");
     }
 
     [Command("list")]
     public async Task<IResult> ListUser(string repoId)
     {
-        var nomadRepoItem = await nomadRepoService.GetAsync(repoId, CancellationToken.None);
+        var nomadRepoItem = await EntityNomadRepoGroupRepository.GetAsync(repoId, CancellationToken.None);
         var response = new StringBuilder($"Listing users for repository {repoId}\n");
         Logger.LogInformation($"Listing users for repository {repoId}");
         await foreach (var user in nomadRepoItem.RepositoryGroup.UserRepository.GetAsync(CancellationToken.None))
@@ -97,6 +104,6 @@ public class UserCommandGroup(ICoreApi client, IKuboOptions kuboOptions, IWacNom
         }
         response.Append($"Finished listing users for repository {repoId}");
 
-        return await feedbackService.SendContextualSuccessAsync(response.ToString());
+        return await Feedback.SendContextualSuccessAsync(response.ToString());
     }
 }
