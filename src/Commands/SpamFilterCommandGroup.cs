@@ -22,7 +22,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
     /// The role names that are allowed to execute spam filter commands.
     /// Users must have at least one of these roles.
     /// </summary>
-    public static readonly string[] RequiredRoleNames = ["Moderator", "Admin", "Administrator"];
+    public static readonly string[] RequiredRoleNames = ["Mod", "Admin"];
 
     private readonly RateLimitSettings _settings;
     private readonly IFeedbackService _feedbackService;
