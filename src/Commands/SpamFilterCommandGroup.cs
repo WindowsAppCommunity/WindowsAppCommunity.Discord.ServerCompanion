@@ -69,7 +69,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 return await _feedbackService.SendContextualSuccessAsync(
                     $"Current TTL window: {_settings.TimeWindowMinutes} minutes");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -95,7 +95,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 return await _feedbackService.SendContextualSuccessAsync(
                     $"TTL window set to {minutes} minutes.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -135,7 +135,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 return await _feedbackService.SendContextualSuccessAsync(
                     $"Current duplicate threshold: {_settings.DuplicateThreshold} messages");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -161,7 +161,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 return await _feedbackService.SendContextualSuccessAsync(
                     $"Duplicate threshold set to {count} messages.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -201,7 +201,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 return await _feedbackService.SendContextualSuccessAsync(
                     $"Current mute duration: {_settings.MuteDurationMinutes} minutes");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -227,7 +227,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 return await _feedbackService.SendContextualSuccessAsync(
                     $"Mute duration set to {minutes} minutes.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -275,7 +275,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
                 return await _feedbackService.SendContextualSuccessAsync(message);
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -302,7 +302,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Added <#{channel.ID}> as notification channel.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -329,7 +329,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Removed <#{channel.ID}> from notification channels.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -377,7 +377,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
                 return await _feedbackService.SendContextualSuccessAsync(message);
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -404,7 +404,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Added <#{channel.ID}> to exempt channels.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -431,7 +431,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Removed <#{channel.ID}> from exempt channels.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -479,7 +479,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
                 return await _feedbackService.SendContextualSuccessAsync(message);
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -506,7 +506,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Added <@&{role.ID}> to exempt roles.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -533,7 +533,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Removed <@&{role.ID}> from exempt roles.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -581,7 +581,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
 
                 return await _feedbackService.SendContextualSuccessAsync(message);
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -608,7 +608,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Added <@{user.ID}> to exempt users.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
@@ -635,7 +635,7 @@ public partial class SpamFilterCommandGroup : CommandGroup
                 await _settings.SaveAsync();
                 return await _feedbackService.SendContextualSuccessAsync($"Removed <@{user.ID}> from exempt users.");
             }
-            catch (RolePermissionException ex)
+            catch (Exception ex)
             {
                 return await _feedbackService.SendContextualErrorAsync(ex.Message);
             }
