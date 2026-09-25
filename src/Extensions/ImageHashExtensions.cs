@@ -1,4 +1,6 @@
+using NeoSolve.ImageSharp.AVIF;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
@@ -18,9 +20,20 @@ public static class ImageHashExtensions
     /// <returns>Hex string representation of the perceptual hash, or null if image invalid/corrupt.</returns>
     public static string? ComputePerceptualHash(this Stream imageStream)
     {
+        Configuration config = Configuration.Default.Clone();
+        config.ImageFormatsManager.AddImageFormat(AVIFFormat.Instance);
+        config.ImageFormatsManager.AddImageFormatDetector(new AvifImageFormatDetector());
+        config.ImageFormatsManager.SetEncoder(AVIFFormat.Instance, AVIFFormat.Instance.Encoder);
+        config.ImageFormatsManager.SetDecoder(AVIFFormat.Instance, AVIFFormat.Instance.Decoder);
+
+        var decoderOptions = new DecoderOptions
+        {
+            Configuration = config,
+        };
+
         try
         {
-            using var image = Image.Load<Rgba32>(imageStream);
+            using var image = Image.Load<Rgba32>(decoderOptions, imageStream);
             
             // Resize to 8x8 pixels
             image.Mutate(x => x.Resize(8, 8));
@@ -59,9 +72,10 @@ public static class ImageHashExtensions
             
             return Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
-        catch
+        catch (Exception ex)
         {
             // Return null for corrupt/invalid images
+            OwlCore.Diagnostics.Logger.LogError(ex.Message, ex);
             return null;
         }
     }
