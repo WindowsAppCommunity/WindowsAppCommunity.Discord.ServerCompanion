@@ -21,7 +21,7 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
     private readonly RateLimitSettings _settings;
     private readonly ServerCompanionConfig _config;
 
-    [GeneratedRegex(@"https?://[^\s]+\.(?:png|jpg|jpeg|gif|webp)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"https?://[^\s]+\.(?:png|jpg|jpeg|gif|webp|avif)", RegexOptions.IgnoreCase)]
     private static partial Regex ImageUrlPattern();
 
     /// <summary>
@@ -66,7 +66,9 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
             {
                 var memberRoles = gatewayEvent.Member.Value.Roles;
                 if (memberRoles.HasValue && memberRoles.Value.Any(roleId => _settings.ExemptRoleIds.Contains(roleId.Value)))
+                {
                     return Result.FromSuccess();
+                }
             }
 
             // Cleanup expired buckets
@@ -89,7 +91,12 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
                 {
                     var imageHash = await ComputeImageHashFromUrlAsync(attachment.Url, ct);
                     if (imageHash != null)
+                    {
                         hashes.Add(imageHash);
+                    } else
+                    {
+                        OwlCore.Diagnostics.Logger.LogInformation($"No image hash computed of attachment {attachment.Url} for {nameof(guildId)}: {guildId}; {nameof(channelId)}: {channelId}; {nameof(messageId)}: {messageId}; {nameof(userId)}: {userId}");
+                    }
                 }
             }
 
@@ -97,11 +104,14 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
             if (!string.IsNullOrWhiteSpace(gatewayEvent.Content))
             {
                 var imageUrls = ImageUrlPattern().Matches(gatewayEvent.Content);
+
                 foreach (Match match in imageUrls)
                 {
                     var imageHash = await ComputeImageHashFromUrlAsync(match.Value, ct);
                     if (imageHash != null)
+                    {
                         hashes.Add(imageHash);
+                    }
                 }
             }
 
@@ -139,7 +149,7 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
         catch (Exception ex)
         {
             // Log error but don't fail gateway processing
-            Console.WriteLine($"[CrossChannelRateLimitResponder] Error: {ex.Message}");
+            OwlCore.Diagnostics.Logger.LogError(ex.Message, ex);
             return Result.FromSuccess();
         }
     }
@@ -152,8 +162,9 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
             using var stream = await httpFile.OpenStreamAsync(cancellationToken: ct);
             return stream.ComputePerceptualHash();
         }
-        catch
+        catch (Exception ex)
         {
+            OwlCore.Diagnostics.Logger.LogError($"Exception while computing hash for {url}", ex);
             return null;
         }
     }
@@ -178,7 +189,7 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
             foreach (var group in messagesByChannel)
             {
                 var messageIds = group.Select(m => m.MessageId).ToList();
-                
+
                 // Bulk delete if possible (max 100 messages, must be <14 days old)
                 if (messageIds.Count > 1 && messageIds.Count <= 100)
                 {
