@@ -49,9 +49,13 @@ var isDebug =
     false;
 #endif
 
+Logger.LogInformation("Logger ready");
+
 // Allow forcing production mode via --prod flag
 var forceProd = args.Contains("--prod");
 var env = (isDebug && !forceProd) ? "dev" : "prod";
+
+Logger.LogInformation($"{nameof(env)} {env}");
 
 var configProvider = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
@@ -61,6 +65,8 @@ var configProvider = new ConfigurationBuilder()
 
 configProvider.TryGet($"{env}:DiscordBotToken", out var botToken);
 configProvider.TryGet($"{env}:GuildId", out var guildId);
+
+Logger.LogInformation($"{nameof(guildId)} {guildId}");
 
 ArgumentNullException.ThrowIfNullOrEmpty(botToken);
 ArgumentNullException.ThrowIfNullOrEmpty(guildId);
@@ -72,6 +78,8 @@ var appDataFolder = new SystemFolder(Environment.GetFolderPath(Environment.Speci
 var windowsAppCommunityFolder = (SystemFolder)await appDataFolder.CreateFolderAsync("WindowsAppCommunity", overwrite: false, cancelTok);
 var wacDiscordFolder = (SystemFolder)await windowsAppCommunityFolder.CreateFolderAsync("Discord", overwrite: false, cancelTok);
 var serverCompanionDataFolder = (SystemFolder)await wacDiscordFolder.CreateFolderAsync("ServerCompanion", overwrite: false, cancelTok);
+
+Logger.LogInformation($"{nameof(serverCompanionDataFolder)}.{nameof(serverCompanionDataFolder.Id)} {serverCompanionDataFolder.Id}");
 
           #if DEBUG
 // Bootstrap and start Kubo
@@ -86,6 +94,7 @@ var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
     RoutingMode = DhtRoutingMode.Auto,
 };
 
+Logger.LogInformation($"Starting kubo");
 await kubo.StartAsync();
 
 var kuboOptions = new KuboOptions
@@ -105,6 +114,7 @@ var wacNomadEntityRepoGroupRepository = new WacNomadRepoGroupRepository(nomadEnt
           #endif
 
 // Discord server-hosted user settings repository
+Logger.LogInformation($"Getting DiscordServerHostedUserSettingsRepository");
 var discordServerHostedUserSettingsRepoDataFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("HostedUserSettings", overwrite: false, cancelTok);
 var discordServerHostedUserSettingsRepo = new DiscordServerHostedUserSettingsRepository(discordServerHostedUserSettingsRepoDataFolder);
 
@@ -112,9 +122,12 @@ var discordServerHostingSettingsDataFolder = (SystemFolder)await serverCompanion
 var discordServerHostingSettings = new DiscordServerHostingSettings(discordServerHostingSettingsDataFolder);
 
 // Initialize rate limiter settings
+Logger.LogInformation($"Getting RateLimitSettings");
 var rateLimitFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync("RateLimitSettings", overwrite: false, cancelTok);
 var rateLimitSettings = new RateLimitSettings(rateLimitFolder);
 await rateLimitSettings.LoadAsync(cancelTok);
+
+Logger.LogInformation($"Registering settings and services with DI");
 
 // Service setup and init  
 var services = new ServiceCollection()
@@ -166,6 +179,7 @@ var slashService = services.GetRequiredService<SlashService>();
 
 await slashService.UpdateSlashCommandsAsync(new Remora.Rest.Core.Snowflake(ulong.Parse(guildId)), ct: cancelTok);
 
+Logger.LogInformation($"Running gateway");
 var runResult = await gatewayClient.RunAsync(cancelTok);
 
 switch (runResult.Error)
@@ -180,14 +194,18 @@ switch (runResult.Error)
             exe.Message
         );
 
+        Logger.LogError(exe.Message, exe.Exception);
+
         break;
     case GatewayWebSocketError:
     case GatewayDiscordError:
         log.LogError("Gateway error: {Message}", runResult.Error.Message);
+        Logger.LogError(runResult.Error.Message);
         break;
     default:
         log.LogError("Unknown error: {Message}", runResult.Error.Message);
+        Logger.LogError(runResult.Error.Message);
         break;
 }
 
-Console.WriteLine("Shutting down");
+Logger.LogInformation("Shutting down");
