@@ -27,7 +27,7 @@ public class RateLimitSettings(IModifiableFolder folder) : SettingsBase(folder, 
     /// </summary>
     public int DuplicateThreshold
     {
-        get => GetSetting(() => 2);
+        get => GetSetting(() => 3);
         set => SetSetting(value);
     }
 
@@ -36,7 +36,7 @@ public class RateLimitSettings(IModifiableFolder folder) : SettingsBase(folder, 
     /// </summary>
     public int TimeWindowMinutes
     {
-        get => GetSetting(() => 30);
+        get => GetSetting(() => 1);
         set => SetSetting(value);
     }
 
@@ -45,7 +45,7 @@ public class RateLimitSettings(IModifiableFolder folder) : SettingsBase(folder, 
     /// </summary>
     public int MuteDurationMinutes
     {
-        get => GetSetting(() => 60);
+        get => GetSetting(() => 120);
         set => SetSetting(value);
     }
 
