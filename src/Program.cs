@@ -95,7 +95,7 @@ var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
 };
 
 Logger.LogInformation($"Starting kubo");
-await kubo.StartAsync();
+//await kubo.StartAsync();
 
 var kuboOptions = new KuboOptions
 {
