@@ -86,8 +86,8 @@ Logger.LogInformation($"{nameof(serverCompanionDataFolder)}.{nameof(serverCompan
 var kuboRepoFolder = (SystemFolder)await serverCompanionDataFolder.CreateFolderAsync(".ipfs", overwrite: false);
 var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
 {
-    GatewayUri = new Uri("http://127.0.0.1:8026"),
-    ApiUri = new Uri("http://127.0.0.1:5026"),
+    GatewayUri = new Uri("http://127.0.0.1:8080"),
+    ApiUri = new Uri("http://127.0.0.1:5001"),
     GatewayUriMode = ConfigMode.OverwriteExisting,
     ApiUriMode = ConfigMode.OverwriteExisting,
     LaunchConflictMode = BootstrapLaunchConflictMode.Attach,
@@ -95,7 +95,7 @@ var kubo = new KuboBootstrapper(kuboRepoFolder.Path)
 };
 
 Logger.LogInformation($"Starting kubo");
-await kubo.StartAsync();
+//await kubo.StartAsync();
 
 var kuboOptions = new KuboOptions
 {

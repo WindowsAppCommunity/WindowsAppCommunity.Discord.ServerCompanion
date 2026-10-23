@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FFMpegCore" Version="5.5.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.2" />
     <PackageReference Include="OwlCore.ComponentModel.Settings" Version="0.1.1" />
     <PackageReference Include="Remora.Discord" Version="2025.1.0" />

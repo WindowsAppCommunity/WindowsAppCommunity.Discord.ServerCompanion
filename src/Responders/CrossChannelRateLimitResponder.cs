@@ -1,5 +1,14 @@
+using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using CommunityToolkit.Diagnostics;
+using FFMpegCore;
+using FFMpegCore.Pipes;
+using OwlCore.ComponentModel;
+using OwlCore.Storage;
+using OwlCore.Storage.System.IO;
 using OwlCore.Storage.System.Net.Http;
 using Remora.Discord.API.Abstractions.Gateway.Events;
 using Remora.Discord.API.Abstractions.Objects;
@@ -23,6 +32,9 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
 
     [GeneratedRegex(@"https?://[^\s]+\.(?:png|jpg|jpeg|gif|webp|avif)", RegexOptions.IgnoreCase)]
     private static partial Regex ImageUrlPattern();
+
+    [GeneratedRegex(@"https?://[^\s]+\.(?:webm|mp4|mpeg|avi|mov|mkv|3gp|3g2|ogv)", RegexOptions.IgnoreCase)]
+    private static partial Regex VideoUrlPattern();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CrossChannelRateLimitResponder"/> class.
@@ -87,13 +99,29 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
             // Hash direct image attachments
             foreach (var attachment in gatewayEvent.Attachments)
             {
-                if (attachment.ContentType.HasValue && attachment.ContentType.Value.StartsWith("image/"))
+                if (!attachment.ContentType.HasValue)
+                    continue;
+                
+                if (attachment.ContentType.Value.StartsWith("image/"))
                 {
                     var imageHash = await ComputeImageHashFromUrlAsync(attachment.Url, ct);
                     if (imageHash != null)
                     {
                         hashes.Add(imageHash);
-                    } else
+                    }
+                    else
+                    {
+                        OwlCore.Diagnostics.Logger.LogInformation($"No image hash computed of attachment {attachment.Url} for {nameof(guildId)}: {guildId}; {nameof(channelId)}: {channelId}; {nameof(messageId)}: {messageId}; {nameof(userId)}: {userId}");
+                    }
+                }
+                else if (attachment.ContentType.Value.StartsWith("video/"))
+                {
+                    var imageHash = await ComputeImageHashFromUrlAsync(attachment.Url, ct);
+                    if (imageHash != null)
+                    {
+                        hashes.Add(imageHash);
+                    }
+                    else
                     {
                         OwlCore.Diagnostics.Logger.LogInformation($"No image hash computed of attachment {attachment.Url} for {nameof(guildId)}: {guildId}; {nameof(channelId)}: {channelId}; {nameof(messageId)}: {messageId}; {nameof(userId)}: {userId}");
                     }
@@ -156,15 +184,20 @@ public partial class CrossChannelRateLimitResponder : IResponder<IMessageCreate>
 
     private async Task<string?> ComputeImageHashFromUrlAsync(string url, CancellationToken ct)
     {
+        HttpFile httpFile = new(new Uri(url));
+        return await ComputeImageHashFromFileAsync(httpFile, ct);
+    }
+    
+    private async Task<string?> ComputeImageHashFromFileAsync(IFile file, CancellationToken ct)
+    {
         try
         {
-            var httpFile = new HttpFile(new Uri(url));
-            using var stream = await httpFile.OpenStreamAsync(cancellationToken: ct);
+            await using var stream = await file.OpenReadAsync(cancellationToken: ct);
             return stream.ComputePerceptualHash();
         }
         catch (Exception ex)
         {
-            OwlCore.Diagnostics.Logger.LogError($"Exception while computing hash for {url}", ex);
+            OwlCore.Diagnostics.Logger.LogError($"Exception while computing hash for {file.Id}", ex);
             return null;
         }
     }
