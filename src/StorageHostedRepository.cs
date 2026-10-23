@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using OwlCore.ComponentModel;
 using OwlCore.Nomad.Kubo;
 using OwlCore.Storage;
 
@@ -8,7 +9,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion;
 /// An abstract class for managing item lifecycle in a repository backed by storage.
 /// </summary>
 /// <typeparam name="T">The type of the item being managed by this repository.</typeparam>
-public abstract class StorageHostedRepository<T>(IModifiableFolder dataFolder) : INomadKuboRepository<T, T, string>
+public abstract class StorageHostedRepository<T>(IModifiableFolder dataFolder) : IRepository<T, T, string>
 {
     /// <summary>
     /// Runtime storage of known and created instances. 
