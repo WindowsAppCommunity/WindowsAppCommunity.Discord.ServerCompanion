@@ -125,11 +125,8 @@ public class PerceptualVideoHasher(IFile videoFile) : IAsyncDisposable
     {
         ct.ThrowIfCancellationRequested();
 
-        while (!proc.HasExited)
+        while (!proc.HasExited && !ct.IsCancellationRequested)
         {
-            if (ct.IsCancellationRequested)
-                break;
-
             // Don't flush while new data is being added.
             using (await _folderWatcherSemaphore.DisposableWaitAsync(ct))
             {
