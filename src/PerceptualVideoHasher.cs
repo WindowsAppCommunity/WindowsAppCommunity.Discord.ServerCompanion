@@ -15,7 +15,7 @@ public class PerceptualVideoHasher(IFile videoFile) : IAsyncDisposable
     
     public IFile VideoFile => videoFile;
     
-    private async IAsyncEnumerable<string> ComputeHashesAsync(CancellationToken ct)
+    public async IAsyncEnumerable<string> ComputeHashesAsync(CancellationToken ct = default)
     {
         // Would love to wrap the whole body in a try-catch, but you can't yield-return from inside one
 
@@ -44,7 +44,11 @@ public class PerceptualVideoHasher(IFile videoFile) : IAsyncDisposable
             ct.ThrowIfCancellationRequested();
 
             const string ffmpegPath = "/usr/bin/ffmpeg";
-            var arguments = $"-hwaccel auto -i pipe:0 -r 1 -f image2 {Path.Join(_imageFolder.Path, "frame-%03d.jpeg")}";
+            var startFrame = 0;
+            var endFrame = 1000;
+            var frameInterval = 10;
+            var frameSize = 8;
+            var arguments = $"-hwaccel auto -i pipe:0 -f image2 -filter:v \"trim=start_frame={startFrame}:end_frame={endFrame}, select=not(mod(n\\,{frameInterval})), format=pix_fmts=gray8\" -s {frameSize}x{frameSize} -fps_mode vfr {Path.Join(_imageFolder.Path, "frame-%03d.jpeg")}";
             ffmpegProc = await ProcessHelpers.StartExecutableAsync(ffmpegPath, videoStream, arguments, ct);
         
             // CancellationTokenSource ffmpegCancellationSource = new();
