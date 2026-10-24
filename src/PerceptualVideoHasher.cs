@@ -10,7 +10,7 @@ using WindowsAppCommunity.Discord.ServerCompanion.Responders;
 
 namespace WindowsAppCommunity.Discord.ServerCompanion;
 
-public class PerceptualVideoHasher(IFile videoFile, string ffmpegPath) : IAsyncDisposable
+public class PerceptualVideoHasher(IFile videoFile) : IAsyncDisposable
 {
     private SystemFolder? _imageFolder = null;
     private SemaphoreSlim _folderWatcherSemaphore = new(1, 1);
@@ -22,6 +22,11 @@ public class PerceptualVideoHasher(IFile videoFile, string ffmpegPath) : IAsyncD
     /// All folders and files created in this folder during processing are cleaned up before processing ends. 
     /// </remarks>
     public required SystemFolder WorkingFolder { get; init; }
+
+    /// <summary>
+    /// The binary file for ffmpeg.
+    /// </summary>
+    public required SystemFile FfmpegBinary { get; init; }
 
     /// <summary>
     /// The video file being processed by this <see cref="PerceptualVideoHasher"/> instance.
@@ -84,8 +89,8 @@ public class PerceptualVideoHasher(IFile videoFile, string ffmpegPath) : IAsyncD
         await using var videoStream = await VideoFile.OpenReadAsync(ct);
 
         // Start ffmpeg
-        Logger.LogInformation($"Starting {ffmpegPath} {arguments}, frame extraction to {_imageFolder.Path}");
-        var ffmpegProc = await ProcessHelpers.StartExecutableAsync(ffmpegPath, videoStream, arguments, ct);
+        Logger.LogInformation($"Starting {FfmpegBinary.Path} {arguments}, frame extraction to {_imageFolder.Path}");
+        var ffmpegProc = await ProcessHelpers.StartExecutableAsync(FfmpegBinary.Path, videoStream, arguments, ct);
         Guard.IsFalse(ffmpegProc.HasExited);
 
         // Listen for stderr

@@ -36,14 +36,18 @@ async Task<int> ComputeVideoHash(string[] args)
     var ffmpegPath = args[2] ?? "/usr/bin/ffmpeg";
 
     SystemFile videoFile = new(videoPath);
-    await using PerceptualVideoHasher hasher = new(videoFile, ffmpegPath) { WorkingFolder = new SystemFolder(Path.GetTempPath()) };
+    await using PerceptualVideoHasher hasher = new(videoFile)
+    {
+        WorkingFolder = new(Path.GetTempPath()),
+        FfmpegBinary = new(ffmpegPath),
+    };
 
     // TODO: Select different hash functions based on `algorithm` argument
     var hashes = hasher.ComputeHashesAsync();
-    
+
     var hashNum = 0;
     await foreach (var hash in hashes)
         Console.WriteLine($"#{++hashNum}: {hash}");
-    
+
     return 0;
 }
