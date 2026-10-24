@@ -19,62 +19,38 @@ public class PerceptualVideoHasher(IFile videoFile) : IAsyncDisposable
     {
         // Would love to wrap the whole body in a try-catch, but you can't yield-return from inside one
 
-        Stream? videoStream = null;
+        await using var videoStream = await VideoFile.OpenReadAsync(cancellationToken: ct);
         
-        try
-        {
-            videoStream = await VideoFile.OpenReadAsync(cancellationToken: ct);
-        }
-        catch (Exception ex)
-        {
-            OwlCore.Diagnostics.Logger.LogError($"Exception while computing hash for {VideoFile.Id}", ex);
-        }
-        
-        if (videoStream is null)
-            yield break;
-        
-        await using (videoStream)
-        {
-            _tmpFolder = new SystemFolder(Path.GetTempPath());
-            Process? ffmpegProc = null;
+        _tmpFolder = new SystemFolder(Path.GetTempPath());
             
-            var imageFolderName = typeof(CrossChannelRateLimitResponder).Namespace ?? ThrowHelper.ThrowArgumentNullException<string>();
-            _imageFolder = (SystemFolder)await _tmpFolder.CreateFolderAsync(imageFolderName, overwrite: true, cancellationToken: ct);
+        var imageFolderName = typeof(CrossChannelRateLimitResponder).Namespace ?? ThrowHelper.ThrowArgumentNullException<string>();
+        _imageFolder = (SystemFolder)await _tmpFolder.CreateFolderAsync(imageFolderName, overwrite: true, cancellationToken: ct);
             
-            ct.ThrowIfCancellationRequested();
+        ct.ThrowIfCancellationRequested();
 
-            const string ffmpegPath = "/usr/bin/ffmpeg";
-            var startFrame = 0;
-            var endFrame = 1000;
-            var frameInterval = 10;
-            var frameSize = 8;
-            var arguments = $"-hwaccel auto -i pipe:0 -f image2 -filter:v \"trim=start_frame={startFrame}:end_frame={endFrame}, select=not(mod(n\\,{frameInterval})), format=pix_fmts=gray8\" -s {frameSize}x{frameSize} -fps_mode vfr {Path.Join(_imageFolder.Path, "frame-%03d.jpeg")}";
-            ffmpegProc = await ProcessHelpers.StartExecutableAsync(ffmpegPath, videoStream, arguments, ct);
+        const string ffmpegPath = "/usr/bin/ffmpeg";
+        var startFrame = 0;
+        var endFrame = 1000;
+        var frameInterval = 10;
+        var frameSize = 8;
+        var arguments = $"-hwaccel auto -i pipe:0 -f image2 -filter:v \"trim=start_frame={startFrame}:end_frame={endFrame}, select=not(mod(n\\,{frameInterval})), format=pix_fmts=gray8\" -s {frameSize}x{frameSize} -fps_mode vfr {Path.Join(_imageFolder.Path, "frame-%03d.jpeg")}";
+        var ffmpegProc = await ProcessHelpers.StartExecutableAsync(ffmpegPath, videoStream, arguments, ct);
         
-            // CancellationTokenSource ffmpegCancellationSource = new();
-            // ffmpegProc.Exited += FfmpegProcOnExited;
-            //
-            // void FfmpegProcOnExited(object? sender, EventArgs e)
-            // {
-            //     throw new NotImplementedException();
-            // }
+        CancellationTokenSource ffmpegCancellationSource = new();
+        ffmpegProc.Exited += FfmpegProcOnExited;
+            
+        void FfmpegProcOnExited(object? sender, EventArgs e)
+        {
+            ffmpegCancellationSource.Cancel();
+        }
 
-            await foreach (var imageFile in GetNewFilesAsync(_imageFolder, ct))
-            {
-                string? hash = null;
+        await foreach (var imageFile in GetNewFilesAsync(_imageFolder, ct))
+        {
+            await using var stream = await imageFile.OpenReadAsync(cancellationToken: ct);
+            var hash = stream.ComputePerceptualHash();
             
-                try
-                {
-                    hash = videoStream.ComputePerceptualHash();
-                }
-                catch (Exception ex)
-                {
-                    OwlCore.Diagnostics.Logger.LogError($"Exception while computing hash for {VideoFile.Id}", ex);
-                }
-            
-                if (hash is not null)
-                    yield return hash;
-            }
+            if (hash is not null)
+                yield return hash;
         }
     }
 
