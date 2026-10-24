@@ -15,8 +15,7 @@ namespace WindowsAppCommunity.Discord.ServerCompanion
         /// <param name="arguments">The execution arguments to provide.</param>
         /// <param name="ct">A token that can be used to cancel the ongoing operation.</param>
         /// <exception cref="System.InvalidOperationException">An error was output during execution.</exception>
-        public static async Task<Process> StartExecutableAsync(
-            string filePath, Stream stdin, string arguments, CancellationToken ct = default)
+        public static async Task<Process> StartExecutableAsync(string filePath, Stream stdin, string arguments, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
             
